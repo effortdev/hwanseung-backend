@@ -12,8 +12,8 @@ public class WebConfig implements WebMvcConfigurer {
     @Override  // 리소스 외부 경로 맵핑 설정
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         String os = System.getProperty("os.name").toLowerCase();
-        if(!os.contains("win")){
-            filePath ="/Users/ikarosala/Documents/bImg/";
+        if (!os.contains("win")) {
+            filePath = "/Users/ikarosala/Documents/bImg/";
         }
 
         registry.addResourceHandler("/api/imgs/**") // 웹에서 접근할 경로

@@ -39,7 +39,7 @@ public class Product {
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content; // 상품 설명 (TEXT로 저장)
 
-    @Column(name = "seller_id", nullable = true, length = 50)
+    @Column(name = "seller_id", nullable = false, length = 50)
     private String sellerId; // 판매자 아이디
 
     @Column(name = "location", nullable = false, length = 100)

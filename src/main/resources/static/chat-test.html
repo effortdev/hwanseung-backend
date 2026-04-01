@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Redis + WebSocket 채팅 테스트</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        #chatLog { list-style-type: none; padding: 0; }
+        #chatLog li { padding: 5px; border-bottom: 1px solid #eee; }
+        input, button { padding: 5px; margin-right: 5px; }
+    </style>
+</head>
+<body>
+<h2>당근마켓 스타일 채팅 테스트 (방 번호: 1)</h2>
+
+<div>
+    <button id="connectBtn" onclick="connect()">연결하기</button>
+    <button id="disconnectBtn" onclick="disconnect()" disabled>연결 끊기</button>
+</div>
+<br>
+<div>
+    <input type="text" id="sender" placeholder="보내는 사람 (예: 구매자)">
+    <input type="text" id="message" placeholder="메시지 입력" onkeypress="if(event.keyCode==13) {sendMessage();}">
+    <button onclick="sendMessage()">전송</button>
+</div>
+
+<ul id="chatLog"></ul>
+
+<script>
+    let stompClient = null;
+    // DTO의 roomId가 String 타입이므로 문자열로 설정
+    const roomId = "1";
+
+    function connect() {
+        // 1. WebSocketConfig에서 설정한 엔드포인트(/ws-chat)로 연결
+        const socket = new SockJS('/ws-chat');
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, function (frame) {
+            console.log('Connected: ' + frame);
+            document.getElementById('connectBtn').disabled = true;
+            document.getElementById('disconnectBtn').disabled = false;
+
+            // 2. 해당 채팅방 구독 (Subscribe)
+            stompClient.subscribe('/sub/chat/room/' + roomId, function (chatMessage) {
+                showGreeting(JSON.parse(chatMessage.body));
+            });
+        });
+    }
+
+    function disconnect() {
+        if (stompClient !== null) {
+            stompClient.disconnect();
+        }
+        document.getElementById('connectBtn').disabled = false;
+        document.getElementById('disconnectBtn').disabled = true;
+        console.log("Disconnected");
+    }
+
+    function sendMessage() {
+        const sender = document.getElementById('sender').value;
+        const message = document.getElementById('message').value;
+
+        if(!sender || !message) {
+            alert("보내는 사람과 메시지를 모두 입력해주세요.");
+            return;
+        }
+
+        // 3. 서버의 ChatController (@MessageMapping("/chat/message")) 로 전송
+        stompClient.send("/pub/chat/message", {}, JSON.stringify({
+            'roomId': roomId,
+            'sender': sender,
+            'content': message
+        }));
+
+        // 전송 후 입력창 비우기
+        document.getElementById('message').value = '';
+    }
+
+    function showGreeting(message) {
+        const chatLog = document.getElementById('chatLog');
+        const li = document.createElement('li');
+        li.appendChild(document.createTextNode(`[${message.sender}] ${message.content}`));
+        chatLog.appendChild(li);
+    }
+</script>
+</body>
+</html>

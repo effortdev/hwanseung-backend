@@ -1,7 +1,10 @@
 package com.hwanseung.backend.domain.user.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.hwanseung.backend.domain.user.entity.User;
 import lombok.Data;
+
+import java.time.LocalDateTime;
 
 @Data
 public class UserResponseDTO {
@@ -17,6 +20,8 @@ public class UserResponseDTO {
     private String address;
     private String detailAddress;
     private String role;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "Asia/Seoul")
+    private LocalDateTime createdAt;
 
     public UserResponseDTO(User entity) {
         this.id = entity.getId();
@@ -31,5 +36,6 @@ public class UserResponseDTO {
         this.address = entity.getAddress();
         this.detailAddress = entity.getDetailAddress();
         this.role = entity.getRole() != null ? entity.getRole().name() : null;
+        this.createdAt = entity.getCreatedAt();
     }
 }

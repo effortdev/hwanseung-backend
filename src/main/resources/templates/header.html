@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>환승마켓 | 헤더 컴포넌트</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            DEFAULT: '#00D27A',
+                            dark: '#00B569',
+                            light: '#E6FAF2',
+                        },
+                        neutral: {
+                            950: '#0A0A0A',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'premium': '0 10px 30px -10px rgba(0, 210, 122, 0.15)',
+                        'card-hover': '0 20px 40px -15px rgba(0, 0, 0, 0.1)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        
+        body {
+            font-family: 'Pretendard', 'Inter', sans-serif;
+            background-color: #fdfdfd;
+            overflow-x: hidden;
+        }
+
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .search-focus-ring:focus-within {
+            border-color: #00D27A;
+            box-shadow: 0 0 0 4px rgba(0, 210, 122, 0.1);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .animate-slide-up {
+            animation: slideUp 0.6s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="text-neutral-900 bg-gray-50 h-[100vh]">
+
+    <!-- Global Navigation Bar (Header) -->
+    <nav class="glass-nav sticky top-0 z-50 w-full h-16 flex items-center bg-white">
+        <div class="max-w-[1200px] mx-auto w-full px-4 flex items-center justify-between gap-8">
+            <!-- Logo -->
+            <div class="flex-shrink-0">
+                <a href="#" class="text-[26px] font-extrabold tracking-tight flex items-center gap-1">
+                    <span class="text-brand">환승</span>
+                    <span class="text-neutral-900">마켓</span>
+                </a>
+            </div>
+
+            <!-- Search Bar Area -->
+            <div class="relative flex-1 max-w-xl group">
+                <div class="search-focus-ring flex items-center bg-gray-100 rounded-full px-5 py-2.5 transition-all duration-300 border-2 border-transparent">
+                    <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <input type="text" id="searchInput" placeholder="어떤 물건을 찾으시나요?" class="bg-transparent w-full focus:outline-none text-sm font-medium placeholder-gray-500">
+                </div>
+
+                <!-- Search Suggestions (Initially hidden) -->
+                <div id="searchDropdown" class="hidden absolute top-full left-0 right-0 mt-3 bg-white rounded-2xl shadow-premium border border-gray-100 p-6 overflow-hidden animate-slide-up">
+                    <div class="grid grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">최근 검색어</h4>
+                            <div id="recentSearches" class="flex flex-wrap gap-2">
+                                <span class="group flex items-center gap-2 px-4 py-1.5 bg-gray-50 rounded-full text-sm hover:bg-brand-light transition-colors cursor-pointer text-gray-700">아이폰 15 <button class="text-gray-400 hover:text-red-400">×</button></span>
+                                <span class="group flex items-center gap-2 px-4 py-1.5 bg-gray-50 rounded-full text-sm hover:bg-brand-light transition-colors cursor-pointer text-gray-700">맥북에어 <button class="text-gray-400 hover:text-red-400">×</button></span>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">실시간 급상승</h4>
+                            <ul class="space-y-3">
+                                <li class="flex items-center gap-3 text-sm cursor-pointer hover:text-brand transition-colors"><span class="font-bold text-brand">1</span> 에어팟 맥스</li>
+                                <li class="flex items-center gap-3 text-sm cursor-pointer hover:text-brand transition-colors"><span class="font-bold text-brand">2</span> 소니 헤드셋</li>
+                                <li class="flex items-center gap-3 text-sm cursor-pointer hover:text-brand transition-colors"><span class="font-bold text-brand">3</span> 캠핑 의자</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interaction Buttons -->
+            <div class="flex items-center gap-6">
+                <div class="hidden md:flex gap-6 items-center">
+                    <!-- 권한에 따라 보여질 관리자 메뉴 (기본적으로는 hidden 속성으로 숨김 처리) -->
+                    <a href="#" id="adminMenu" class="hidden text-brand font-bold hover:text-brand-dark transition-colors border border-brand/30 bg-brand/5 px-3 py-1.5 rounded-full text-sm shrink-0">
+                        ⚙️ 관리자 페이지
+                    </a>
+                    
+                    <button class="text-gray-600 hover:text-brand font-semibold transition-colors">채팅</button>
+                    <button class="text-gray-600 hover:text-brand font-semibold transition-colors">알림</button>
+                    <button class="text-gray-600 hover:text-brand font-semibold transition-colors">내 정보</button>
+                </div>
+                <button class="bg-brand text-white px-6 py-2.5 rounded-xl font-bold hover:bg-brand-dark transition-all shadow-md active:scale-95">
+                    판매하기
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <script>
+        // Search Dropdown Logic
+        const searchInput = document.getElementById('searchInput');
+        const searchDropdown = document.getElementById('searchDropdown');
+
+        searchInput.addEventListener('focus', () => {
+            searchDropdown.classList.remove('hidden');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
+                searchDropdown.classList.add('hidden');
+            }
+        });
+
+        // Simple recent search remove logic
+        document.querySelectorAll('#recentSearches button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                btn.parentElement.remove();
+            });
+        });
+
+        // ==========================================
+        // 👑 권한 체크 및 관리자 메뉴 노출 로직
+        // ==========================================
+        // 실제 서비스에서는 API 응답, localStorage, 세션 등에서 현재 로그인한 유저 정보를 가져옵니다.
+        const currentUser = {
+            id: 'tester123',
+            name: '김관리',
+            role: 'admin'  // 💡 테스트: 'user', 'admin', 'super' 로 변경하며 확인해보세요.
+        };
+
+        const adminMenu = document.getElementById('adminMenu');
+
+        // 유저 권한이 'admin' 이거나 'super' 일 때만 'hidden' 클래스를 제거하여 메뉴를 노출합니다.
+        if (currentUser.role === 'admin' || currentUser.role === 'super') {
+            if(adminMenu) adminMenu.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

@@ -1,13 +1,12 @@
 package com.hwanseung.backend.domain.user.controller;
 
 import com.hwanseung.backend.domain.user.config.JwtTokenProvider;
+import com.hwanseung.backend.domain.user.dto.PayChargeVO;
+import com.hwanseung.backend.domain.user.dto.PayHistory;
 import com.hwanseung.backend.domain.user.svc.PayService;
 
-// 🌟 (주의) 아래 VO 클래스 경로는 회원님 프로젝트의 실제 경로에 맞게 꼭 수정해주세요!
-import com.hwanseung.backend.domain.user.vo.PayChargeVO;
 
 import com.fasterxml.jackson.databind.ObjectMapper; // 🌟 바로 이 녀석이 JSON 통역사입니다!
-import com.hwanseung.backend.domain.user.vo.PayHistory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -29,13 +28,13 @@ public class PayRestController {
     private final PayService payService;
     private final JwtTokenProvider jwtTokenProvider;
 
+    //properties에 숨겨둔 키 가져오기
     @Value("${iamport.api.key}")
     private String impKey;
 
     @Value("${iamport.api.secret}")
     private String impSecretKey;
 
-    // 1. 포트원 토큰 발급 메서드
     public String getToken() {
         try {
             Map<String, String> requestBody = new HashMap<>();
@@ -96,11 +95,19 @@ public class PayRestController {
             if ("paid".equals(status) && chargeVO.getAmount() == actualPaidAmount) {
                 PayHistory history = new PayHistory();
 
+                // 1. userId는 String이므로 변환해서 삽입
                 history.setUserId(String.valueOf(userId));
+
+                // 2. 나머지 String 값들 삽입
                 history.setImpUid(chargeVO.getImp_uid());
                 history.setMerchantUid(chargeVO.getMerchant_uid());
-                history.setAmount(actualPaidAmount);
                 history.setType("CHARGE");
+
+                // 3. amount는 int이므로 숫자로 삽입
+                // (iamportData에서 가져온 값은 Integer이므로 바로 호환됩니다)
+                history.setAmount(actualPaidAmount);
+
+                // 🌟 historyNo와 createdAt은 DB가 알아서 해주니 코드로 넣지 마세요!
 
                 boolean isSuccess = payService.chargeHwanseungPay(history);
 

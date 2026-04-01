@@ -12,4 +12,7 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, String> {
     Optional<ChatRoom> findByRoomTypeAndItemIdAndBuyerIdAndSellerId(
             RoomType roomType, Long itemId, String buyerId, String sellerId
     );
+
+    // [중고거래] 특정 상품에 대해 특정 구매자가 이미 만들어둔 방이 있는지 찾습니다.
+    Optional<ChatRoom> findByItemIdAndBuyerId(Long itemId, String buyerId);
 }

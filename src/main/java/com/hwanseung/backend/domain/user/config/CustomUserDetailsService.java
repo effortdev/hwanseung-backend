@@ -19,7 +19,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         System.out.println("CustomUserDetailsService loadUserByUsername 실행 (로그인 아이디: " + username + ")");
 
         // findByUsername -> findByUserid 로 변경
-        User user = userRepository.findByUserid(username).orElseThrow(
+        User user = userRepository.findByUsername(username).orElseThrow(
                 () -> new UsernameNotFoundException("해당 아이디를 가진 유저가 존재하지 않습니다. userid = " + username));
 
         return new CustomUserDetails(user);

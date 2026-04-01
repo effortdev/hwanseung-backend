@@ -47,4 +47,10 @@ public class PayService {
             throw new RuntimeException("DB 저장 실패로 인한 결제 취소");
         }
     }
+    @Transactional(readOnly = true)
+    public int getBalance(String userId) {
+        return payBalanceRepository.findById(userId)
+                .map(PayBalance::getHwanseungPay)
+                .orElse(0); // 통장이 없으면 0원
+    }
 }

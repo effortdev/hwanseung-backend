@@ -1,5 +1,9 @@
 package com.hwanseung.backend.domain.user.config;
 
+// ... 기존 import 문들 ...
+import org.springframework.util.StringUtils;
+import org.springframework.web.filter.OncePerRequestFilter;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,9 +14,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
-import org.springframework.web.filter.OncePerRequestFilter;
-
 import java.io.IOException;
 
 @Component
@@ -22,7 +23,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     private final CustomUserDetailsService customUserDetailsService;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String accessToken = getTokenFromRequest(request);
         if (accessToken != null && jwtTokenProvider.validateToken(accessToken)) {
             UsernamePasswordAuthenticationToken authentication = getAuthenticationFromToken(accessToken);
@@ -41,8 +42,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     }
 
     private UsernamePasswordAuthenticationToken getAuthenticationFromToken(String token) {
-        Long userId = jwtTokenProvider.getUserIdFromToken(token);
-        UserDetails userDetails = customUserDetailsService.loadUserByUserId(userId);
+        // 🌟 시큐리티용 글자 아이디(예: "es")를 꺼내서 인증합니다.
+        String username = jwtTokenProvider.getUsernameFromToken(token);
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
         return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
 }

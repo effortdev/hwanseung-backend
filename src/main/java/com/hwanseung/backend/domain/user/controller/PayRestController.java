@@ -4,9 +4,7 @@ import com.hwanseung.backend.domain.user.config.JwtTokenProvider;
 import com.hwanseung.backend.domain.user.dto.PayChargeVO;
 import com.hwanseung.backend.domain.user.dto.PayHistory;
 import com.hwanseung.backend.domain.user.svc.PayService;
-
-
-import com.fasterxml.jackson.databind.ObjectMapper; // 🌟 바로 이 녀석이 JSON 통역사입니다!
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -28,23 +26,19 @@ public class PayRestController {
     private final PayService payService;
     private final JwtTokenProvider jwtTokenProvider;
 
-    //properties에 숨겨둔 키 가져오기
     @Value("${iamport.api.key}")
     private String impKey;
 
     @Value("${iamport.api.secret}")
     private String impSecretKey;
 
+    // 1. 포트원 토큰 가져오기
     public String getToken() {
         try {
             Map<String, String> requestBody = new HashMap<>();
             requestBody.put("imp_key", impKey);
             requestBody.put("imp_secret", impSecretKey);
-
-            // JSON 통역사 생성! (DB랑 무관함)
             ObjectMapper mapper = new ObjectMapper();
-
-            // 자바 Map -> JSON 글자로 번역해서 포트원으로 전송
             String jsonBody = mapper.writeValueAsString(requestBody);
 
             HttpRequest request = HttpRequest.newBuilder()
@@ -54,15 +48,11 @@ public class PayRestController {
                     .build();
 
             HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-
-            // 포트원이 보낸 JSON 글자 -> 자바 Map으로 번역해서 꺼내기
             Map<String, Object> resMap = mapper.readValue(response.body(), Map.class);
             Map<String, Object> responseData = (Map<String, Object>) resMap.get("response");
 
             return (String) responseData.get("access_token");
-
         } catch (Exception e) {
-            System.out.println("포트원 토큰 발급 실패: " + e.getMessage());
             return null;
         }
     }
@@ -72,6 +62,7 @@ public class PayRestController {
     public ResponseEntity<String> verifyCharge(@RequestHeader("Authorization") String accessToken,
                                                @RequestBody PayChargeVO chargeVO) {
 
+        // 🌟 수정 1: 토큰에서 고유번호를 확실하게 숫자(Long)로 받습니다!
         Long userId = this.jwtTokenProvider.getUserIdFromToken(accessToken.substring(7));
 
         try {
@@ -84,7 +75,6 @@ public class PayRestController {
 
             HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 
-            // 여기서도 통역사 활약!
             ObjectMapper mapper = new ObjectMapper();
             Map<String, Object> resMap = mapper.readValue(response.body(), Map.class);
             Map<String, Object> iamportData = (Map<String, Object>) resMap.get("response");
@@ -95,19 +85,13 @@ public class PayRestController {
             if ("paid".equals(status) && chargeVO.getAmount() == actualPaidAmount) {
                 PayHistory history = new PayHistory();
 
-                // 1. userId는 String이므로 변환해서 삽입
+                // 🌟 수정 2: 장부(PayHistory)에 적을 때는 String.valueOf()를 써서 글자로 변환해 줍니다!
                 history.setUserId(String.valueOf(userId));
 
-                // 2. 나머지 String 값들 삽입
                 history.setImpUid(chargeVO.getImp_uid());
                 history.setMerchantUid(chargeVO.getMerchant_uid());
                 history.setType("CHARGE");
-
-                // 3. amount는 int이므로 숫자로 삽입
-                // (iamportData에서 가져온 값은 Integer이므로 바로 호환됩니다)
                 history.setAmount(actualPaidAmount);
-
-                // 🌟 historyNo와 createdAt은 DB가 알아서 해주니 코드로 넣지 마세요!
 
                 boolean isSuccess = payService.chargeHwanseungPay(history);
 
@@ -124,8 +108,13 @@ public class PayRestController {
     // 3. 내 잔액 조회 API
     @GetMapping("/balance")
     public ResponseEntity<Integer> getMyBalance(@RequestHeader("Authorization") String accessToken) {
+
+        // 🌟 수정 3: 토큰에서 고유번호를 숫자(Long)로 받습니다!
         Long userId = this.jwtTokenProvider.getUserIdFromToken(accessToken.substring(7));
-        int myBalance = 50000;
+
+        // 🌟 수정 4: 서비스에 넘겨줄 때도 String.valueOf()로 글자 변환해서 전달합니다!
+        int myBalance = payService.getBalance(String.valueOf(userId));
+
         return ResponseEntity.status(HttpStatus.OK).body(myBalance);
     }
 }

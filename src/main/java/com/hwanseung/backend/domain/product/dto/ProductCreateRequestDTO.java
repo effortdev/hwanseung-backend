@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @Getter
 @Setter
 public class ProductCreateRequestDTO {
@@ -14,6 +16,5 @@ public class ProductCreateRequestDTO {
     private String location;
     private String content;
 
-    private MultipartFile image;
-
+    private List<MultipartFile> images;
 }

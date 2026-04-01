@@ -17,7 +17,7 @@ public class UserRestController {
     private final JwtTokenProvider jwtTokenProvider;
 
     /** 회원정보 조회 API */
-    @PostMapping("/api/v1/user")
+    @PostMapping("/api/user")
     public ResponseEntity<?> findUser(@RequestHeader("Authorization") String accessToken) {
         Long id = this.jwtTokenProvider.getUserIdFromToken(accessToken.substring(7));
         UserResponseDTO userResponseDto = this.userService.findById(id);
@@ -26,7 +26,7 @@ public class UserRestController {
     }
 
     /** 회원정보 수정 API */
-    @PutMapping("/api/v1/user")
+    @PutMapping("/api/user")
     public ResponseEntity<?> updateUser(@RequestHeader("Authorization") String accessToken,
                                         @RequestBody UserRequestDTO requestDto) {
         Long id = this.jwtTokenProvider.getUserIdFromToken(accessToken.substring(7));
@@ -35,7 +35,7 @@ public class UserRestController {
     }
 
     /** 회원정보 삭제 API */
-    @DeleteMapping("/api/v1/user")
+    @DeleteMapping("/api/user")
     public ResponseEntity<?> deleteUser(@RequestHeader("Authorization") String accessToken) {
         Long id = this.jwtTokenProvider.getUserIdFromToken(accessToken.substring(7));
         this.userService.delete(id);

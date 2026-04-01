@@ -49,4 +49,9 @@ public class ChatService {
             return chatRoomRepository.save(newRoom);
         });
     }
+
+    public List<ChatRoom> findAllRooms() {
+        // JPA가 제공하는 기본 메서드인 findAll()을 사용해 테이블의 모든 데이터를 가져옵니다.
+        return chatRoomRepository.findAll();
+    }
 }

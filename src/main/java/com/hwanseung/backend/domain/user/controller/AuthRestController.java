@@ -17,7 +17,7 @@ public class AuthRestController {
     private final UserService userService;
 
     /** 로그인 API */
-    @PostMapping("/api/v1/auth/login")
+    @PostMapping("/api/auth/login")
     public ResponseEntity<?> login(@RequestBody AuthRequestDTO requestDto) {
         System.out.println("requestDto 로그인: "+requestDto);
         AuthResponseDTO responseDto = this.authService.login(requestDto);
@@ -26,7 +26,7 @@ public class AuthRestController {
     }
 
     /** 회원가입 API */
-    @PostMapping("/api/v1/auth/signup")
+    @PostMapping("/api/auth/signup")
     public ResponseEntity<?> singUp(@RequestBody UserRequestDTO requestDto) {
         System.out.println("requestDto: "+requestDto);
         this.authService.signup(requestDto);
@@ -35,7 +35,7 @@ public class AuthRestController {
 
 
     /** 토큰갱신 API */
-    @GetMapping("/api/v1/auth/refresh")
+    @GetMapping("/api/auth/refresh")
     public ResponseEntity<?> refreshToken(@RequestHeader("REFRESH_TOKEN") String refreshToken) {
         String newAccessToken = this.authService.refreshToken(refreshToken);
         return ResponseEntity.status(HttpStatus.OK).body(newAccessToken);

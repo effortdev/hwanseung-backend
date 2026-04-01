@@ -26,31 +26,34 @@ public class WebSecurityConfig {
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // 관리자 : 관리자 관련 모든 요청에 대해 승인된 사용자 중 ADMIN 권한이 있는 사용자만 허용
-                        .requestMatchers("/api/v1/admin/**", "/api/v2/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                         // 회원가입 및 로그인 관련 모든 요청에 대해 아무나 승인
-                        .requestMatchers("/api/v1/auth/**", "/api/v2/auth/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
 
                         // 상품페이지
                         .requestMatchers("/api/products/**").authenticated()
 
+                        // 채팅
+                        .requestMatchers("/ws-chat/**").permitAll()
+
                         // 중복체크 관련 모든 요청에 대해 아무나 허용
-                        .requestMatchers("/api/v1/user/check/**", "/api/v2/user/check/**").permitAll()
+                        .requestMatchers("/api/user/check/**").permitAll()
 
                         // 유저정보 관련 모든 요청에 대해 승인된 사용자만 허용
-                        .requestMatchers("/api/v1/user/**", "/api/v2/user/**").authenticated()
+                        .requestMatchers("/api/user/**").authenticated()
 
                         // 첨부파일 관련 GET 요청에 대해 아무나 승인
-                        .requestMatchers(HttpMethod.GET, "/api/v1/attachment/**", "/api/v2/attachment/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/attachment/**").permitAll()
 
                         // 댓글 관련 GET 요청에 대해 아무나 승인
-                        .requestMatchers(HttpMethod.GET, "/api/v1/comment/**", "/api/v2/comment/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/comment/**").permitAll()
 
                         // 게시글 관련 GET 요청에 대해 아무나 승인
-                        .requestMatchers(HttpMethod.GET, "/api/v1/post/**", "/api/v2/post/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/post/**").permitAll()
 
                         // 기타 모든 요청에 대해 승인된 사용자만 허용
-                        .requestMatchers("/api/v1/**", "/api/v2/**").authenticated()
+                        .requestMatchers("/api/**").authenticated()
                 )
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

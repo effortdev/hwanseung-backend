@@ -17,7 +17,7 @@ public class UserRestController {
     private final JwtTokenProvider jwtTokenProvider;
 
     /** 회원정보 조회 API */
-    @PostMapping("/api/user")
+    @GetMapping("/api/user")
     public ResponseEntity<?> findUser(@RequestHeader("Authorization") String accessToken) {
         Long id = this.jwtTokenProvider.getUserIdFromToken(accessToken.substring(7));
         UserResponseDTO userResponseDto = this.userService.findById(id);

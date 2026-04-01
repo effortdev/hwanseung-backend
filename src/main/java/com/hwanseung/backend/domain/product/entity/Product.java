@@ -1,17 +1,18 @@
 package com.hwanseung.backend.domain.product.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "product")
@@ -19,6 +20,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+@EntityListeners(AuditingEntityListener.class)
 public class Product {
 
     @Id
@@ -44,4 +46,42 @@ public class Product {
 
     @Column(name = "location", nullable = false, length = 100)
     private String location; // 거래 지역
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+
+    // 상품 1개 : 이미지 여러 개
+    @Builder.Default
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductImage> productImages = new ArrayList<>();
+
+    // 상품 수정용 메서드 - 나중에 수정 기능 만들 때 사용
+    public void updateProduct(String title, String category, int price, String content, String location) {
+        this.title = title;
+        this.category = category;
+        this.price = price;
+        this.content = content;
+        this.location = location;
+    }
+
+    // 소프트 삭제용 메서드
+    public void deleteProduct() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    // 양방향 연관관계 편의 메서드
+    public void addProductImage(ProductImage productImage) {
+        this.productImages.add(productImage);
+        productImage.setProduct(this);
+    }
+
 }

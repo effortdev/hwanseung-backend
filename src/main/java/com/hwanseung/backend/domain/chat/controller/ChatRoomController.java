@@ -5,6 +5,7 @@ import com.hwanseung.backend.domain.chat.entity.ChatRoom;
 import com.hwanseung.backend.domain.chat.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -39,12 +40,23 @@ public class ChatRoomController {
 
     // [React 호출 3] 고객센터 1:1 채팅방 생성 또는 조회
     @PostMapping("/room/admin")
-    public ResponseEntity<ChatRoom> createOrGetAdminRoom(@RequestBody Map<String, Object> request) {
-        String userId = request.get("userId").toString();
+//    public ResponseEntity<ChatRoom> createOrGetAdminRoom(@RequestBody Map<String, Object> request) {
+//        String userId = request.get("userId").toString();
+    public ResponseEntity<ChatRoom> createOrGetAdminRoom(Authentication authentication) {
 
+        // 🚨 프론트엔드에서 데이터를 받을 필요가 아예 없습니다!
+        // 시큐리티(JWT)가 검증을 끝낸 현재 접속자의 아이디를 바로 꺼냅니다.
+        String userId = authentication.getName();
         // 에러 해결! Repository 대신 Service를 호출합니다.
         ChatRoom room = chatService.createOrGetAdminRoom(userId);
 
         return ResponseEntity.ok(room);
+    }
+
+    @GetMapping("/admin/rooms")
+    public ResponseEntity<List<ChatRoom>> getAllChatRooms() {
+        // ChatService에 모든 방을 조회하는 메서드(예: findAllRooms)를 호출합니다.
+        List<ChatRoom> rooms = chatService.findAllRooms();
+        return ResponseEntity.ok(rooms);
     }
 }

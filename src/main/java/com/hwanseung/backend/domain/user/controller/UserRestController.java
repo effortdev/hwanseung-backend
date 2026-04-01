@@ -17,7 +17,7 @@ public class UserRestController {
     private final JwtTokenProvider jwtTokenProvider;
 
     /** 회원정보 조회 API */
-    @PostMapping("/api/user")
+    @GetMapping("/api/user")
     public ResponseEntity<?> findUser(@RequestHeader("Authorization") String accessToken) {
         // 🌟 토큰에서 Long id를 꺼냅니다!
         Long id = this.jwtTokenProvider.getUserIdFromToken(accessToken.substring(7));

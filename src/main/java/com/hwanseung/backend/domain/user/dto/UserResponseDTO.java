@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Data
 public class UserResponseDTO {
     private Long id;
-    private String userid;
+    private String name;
     private String username;
     private String nickname;
     private String birthday;
@@ -25,7 +25,7 @@ public class UserResponseDTO {
 
     public UserResponseDTO(User entity) {
         this.id = entity.getId();
-        this.userid = entity.getUserid();
+        this.name = entity.getName();
         this.username = entity.getUsername();
         this.nickname = entity.getNickname();
         this.birthday = entity.getBirthday();

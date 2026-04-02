@@ -40,8 +40,8 @@ public class UserService {
         this.userRepository.delete(user);
     }
 
-    public boolean isUseridDuplicate(String userid) {
-        return userRepository.existsByUserid(userid);
+    public boolean isUseridDuplicate(String username) {
+        return userRepository.existsByUsername(username);
     }
 
     public boolean isNicknameDuplicate(String nickname) {

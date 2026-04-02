@@ -1,6 +1,7 @@
 package com.hwanseung.backend.domain.product.controller;
 
 import com.hwanseung.backend.domain.product.dto.ProductCreateRequestDTO;
+import com.hwanseung.backend.domain.product.entity.Product;
 import com.hwanseung.backend.domain.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -31,5 +32,16 @@ public class ProductController {
                 "message", "상품 등록 완료",
                 "productId", productId
         ));
+    }
+
+    // 🔥 상품 상세 조회
+    @GetMapping("/{productId}")
+    public ResponseEntity<Product> getProduct(@PathVariable Integer productId) {
+
+        System.out.println("👉 상세 조회 요청 id = " + productId);
+
+        Product product = productService.getProduct(productId);
+
+        return ResponseEntity.ok(product);
     }
 }

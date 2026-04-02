@@ -93,4 +93,10 @@ public class ProductService {
                 .imagePath(imagePath)
                 .build();
     }
+
+    public Product getProduct(Integer productId) {
+        return productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("상품 없음"));
+    }
+
 }

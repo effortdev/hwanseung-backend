@@ -27,7 +27,7 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public String getUsername() {
         // 🌟 시큐리티 규격에 맞춰 무조건 로그인 아이디 반환
-        return user.getUserid();
+        return user.getUsername();
     }
 
     @Override

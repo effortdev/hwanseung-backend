@@ -77,7 +77,7 @@ public class AuthService {
         newBalance.setUserId(String.valueOf(savedUser.getId())); // 방금 생성된 유저의 고유번호(예: 1) 세팅
         newBalance.setHwanseungPay(0); // 잔액 0원 세팅
 
-        this.userRepository.save(requestDto.toEntity());
+        this.payBalanceRepository.save(newBalance);
     }
 
     /** Token 갱신 */

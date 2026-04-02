@@ -19,10 +19,16 @@ public class JwtTokenProvider {
 
     public String generateAccessToken(Authentication authentication) {
         CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
+
+        System.out.println("customUserDetails id: " + customUserDetails.getId());
+        System.out.println("customUserDetails role: " + customUserDetails.getAuthorities());
+        System.out.println("customUserDetails username: " + customUserDetails.getUsername());
         Date expiryDate = new Date(new Date().getTime() + jwtAccessTokenExpirationTime);
+        String role = customUserDetails.getAuthorities().iterator().next().toString();
         return Jwts.builder()
                 .setSubject(customUserDetails.getUsername())
                 .claim("user-id", customUserDetails.getId())
+                .claim("role", role)
 //                .claim("user-email", customUserDetails.getEmail())
                 .setIssuedAt(new Date())
                 .setExpiration(expiryDate)

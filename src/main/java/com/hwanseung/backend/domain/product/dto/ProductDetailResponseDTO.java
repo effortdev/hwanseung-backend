@@ -17,6 +17,7 @@ public class ProductDetailResponseDTO {
     private String location;
     private String content;
     private String sellerId;
+    private String sellerNickname;
     private List<ProductImageResponseDTO> productImages;
 
     public static ProductDetailResponseDTO from(Product product) {
@@ -28,6 +29,7 @@ public class ProductDetailResponseDTO {
                 .location(product.getLocation())
                 .content(product.getContent())
                 .sellerId(product.getSellerId())
+                .sellerNickname(product.getSellerNickname())
                 .productImages(
                         product.getProductImages().stream()
                                 .map(ProductImageResponseDTO::from)

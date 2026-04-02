@@ -29,6 +29,8 @@ public class AuthService {
     @Transactional
     public AuthResponseDTO login(AuthRequestDTO requestDto) {
         // CHECK USERNAME AND PASSWORD
+        System.out.print("requestDto");
+        System.out.println(requestDto);
         User user = this.userRepository.findByUsername(requestDto.getUsername()).orElseThrow(
                 () -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다. username = " + requestDto.getUsername()));
         if (!passwordEncoder.matches(requestDto.getPassword(), user.getPassword())) {

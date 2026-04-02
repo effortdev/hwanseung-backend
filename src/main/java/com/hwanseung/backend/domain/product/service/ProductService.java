@@ -6,6 +6,7 @@ import com.hwanseung.backend.domain.product.dto.ProductListResponseDTO;
 import com.hwanseung.backend.domain.product.entity.Product;
 import com.hwanseung.backend.domain.product.entity.ProductImage;
 import com.hwanseung.backend.domain.product.repository.ProductRepository;
+import com.hwanseung.backend.domain.user.config.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -31,8 +32,10 @@ public class ProductService {
 
     public Integer createProduct(ProductCreateRequestDTO requestDTO, Authentication authentication) throws IOException {
 
-        // 판매자 아이디는 로그인 사용자 기준으로 처리
-        String sellerId = authentication.getName();
+        CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
+
+        String sellerId = loginUser.getUsername();   // 아이디
+        String sellerNickname = loginUser.getNickname(); // 닉네임
 
         Product product = Product.builder()
                 .title(requestDTO.getTitle())
@@ -41,6 +44,7 @@ public class ProductService {
                 .location(requestDTO.getLocation())
                 .content(requestDTO.getContent())
                 .sellerId(sellerId)
+                .sellerNickname(sellerNickname)
                 .build();
 
         List<MultipartFile> images = requestDTO.getImages();

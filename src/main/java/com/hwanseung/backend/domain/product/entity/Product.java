@@ -44,6 +44,9 @@ public class Product {
     @Column(name = "seller_id", nullable = false, length = 50)
     private String sellerId; // 판매자 아이디
 
+    @Column(name = "seller_nickname", nullable = false, length = 50)
+    private String sellerNickname; // 판매자 닉네임
+
     @Column(name = "location", nullable = false, length = 100)
     private String location; // 거래 지역
 

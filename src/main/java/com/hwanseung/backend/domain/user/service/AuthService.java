@@ -16,6 +16,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+// 🌟 1. 지갑 관련 클래스들을 불러옵니다. (경로는 회원님의 프로젝트에 맞게 확인해 주세요!)
+import com.hwanseung.backend.domain.user.dto.PayBalance;
+import com.hwanseung.backend.domain.user.controller.PayBalanceRepository;
+
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +29,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
+    private final PayBalanceRepository payBalanceRepository;
     /** 로그인 */
     @Transactional
     public AuthResponseDTO login(AuthRequestDTO requestDto) {
@@ -64,6 +69,12 @@ public class AuthService {
         // SAVE USER ENTITY
         requestDto.setRole(Role.ROLE_USER);
         requestDto.setPassword(passwordEncoder.encode(requestDto.getPassword()));//암호화가 이루어지는 곳
+        User savedUser = this.userRepository.save(requestDto.toEntity());
+
+        PayBalance newBalance = new PayBalance();
+        newBalance.setUserId(String.valueOf(savedUser.getId())); // 방금 생성된 유저의 고유번호(예: 1) 세팅
+        newBalance.setHwanseungPay(0); // 잔액 0원 세팅
+
         this.userRepository.save(requestDto.toEntity());
     }
 

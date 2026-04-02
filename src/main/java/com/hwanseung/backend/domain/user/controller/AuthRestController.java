@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RequiredArgsConstructor
 @RestController
 public class AuthRestController {
@@ -40,4 +42,27 @@ public class AuthRestController {
         String newAccessToken = this.authService.refreshToken(refreshToken);
         return ResponseEntity.status(HttpStatus.OK).body(newAccessToken);
     }
+
+    // 아이디 중복 체크
+    @GetMapping("/api/auth/check-userid")
+    public ResponseEntity<Map<String, Boolean>> checkUserid(@RequestParam("userid") String userid) {
+        boolean isDuplicate = userService.isUseridDuplicate(userid);
+        return ResponseEntity.ok(Map.of("isDuplicate", isDuplicate));
+    }
+
+    // 닉네임 중복 체크
+    @GetMapping("/api/auth/check-nickname")
+    public ResponseEntity<Map<String, Boolean>> checkNickname(@RequestParam("nickname") String nickname) {
+        boolean isDuplicate = userService.isNicknameDuplicate(nickname);
+        return ResponseEntity.ok(Map.of("isDuplicate", isDuplicate));
+    }
+
+    // 이메일 중복 체크
+    @GetMapping("/api/auth/check-email")
+    public ResponseEntity<Map<String, Boolean>> checkEmail(@RequestParam("email") String email) {
+        boolean isDuplicate = userService.isEmailDuplicate(email);
+        return ResponseEntity.ok(Map.of("isDuplicate", isDuplicate));
+    }
+
+
 }

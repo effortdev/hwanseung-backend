@@ -39,4 +39,16 @@ public class UserService {
                 () -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다. user_id = " + id));
         this.userRepository.delete(user);
     }
+
+    public boolean isUseridDuplicate(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
+    public boolean isNicknameDuplicate(String nickname) {
+        return userRepository.existsByNickname(nickname);
+    }
+
+    public boolean isEmailDuplicate(String email) {
+        return userRepository.existsByEmail(email);
+    }
 }

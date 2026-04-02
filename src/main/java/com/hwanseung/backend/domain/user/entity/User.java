@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @Setter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -22,11 +23,11 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 50, unique = true)
-    private String userid; // 로그인 아이디 (인덱스 3)
+    @Column(name="userid", nullable = false, length = 50, unique = true)
+    private String username; // 로그인 아이디 (인덱스 3)
 
     @Column(nullable = false, length = 50)
-    private String username; // 사용자 이름 (실명 등)
+    private String name; // 사용자 이름 (실명 등)
 
     @Column(nullable = false, length = 100)
     private String password;
@@ -71,14 +72,14 @@ public class User {
 
     @Builder
     public User(String email, String contact, String username, String password, Role role,
-                String userid, String nickname, String birthday, String gender,
+                String name, String nickname, String birthday, String gender,
                 String zipCode, String address, String detailAddress) {
         this.email = email;
         this.contact = contact;
         this.username = username;
         this.password = password;
         this.role = role;
-        this.userid = userid;
+        this.name = name;
         this.nickname = nickname;
         this.birthday = birthday;
         this.gender = gender;

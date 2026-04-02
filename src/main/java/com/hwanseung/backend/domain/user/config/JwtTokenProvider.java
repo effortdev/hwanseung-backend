@@ -24,11 +24,10 @@ public class JwtTokenProvider {
         System.out.println("customUserDetails role: " + customUserDetails.getAuthorities());
         System.out.println("customUserDetails username: " + customUserDetails.getUsername());
         Date expiryDate = new Date(new Date().getTime() + jwtAccessTokenExpirationTime);
-        String role = customUserDetails.getAuthorities().iterator().next().toString();
         return Jwts.builder()
                 .setSubject(customUserDetails.getUsername())
                 .claim("user-id", customUserDetails.getId())
-                .claim("role", role)
+                .claim("role", customUserDetails.getAuthorities().iterator().next().toString())
 //                .claim("user-email", customUserDetails.getEmail())
                 .setIssuedAt(new Date())
                 .setExpiration(expiryDate)
@@ -43,6 +42,7 @@ public class JwtTokenProvider {
                 .setSubject(customUserDetails.getUsername())
                 .claim("user-id", customUserDetails.getId())
                 .claim("user-email", customUserDetails.getEmail())
+                .claim("role", customUserDetails.getAuthorities().iterator().next().toString())
                 .setIssuedAt(new Date())
                 .setExpiration(expiryDate)
                 .signWith(SignatureAlgorithm.HS512, jwtSecretKey)

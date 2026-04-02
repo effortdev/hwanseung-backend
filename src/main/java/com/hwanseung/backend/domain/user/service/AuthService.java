@@ -29,10 +29,10 @@ public class AuthService {
     @Transactional
     public AuthResponseDTO login(AuthRequestDTO requestDto) {
         // CHECK USERNAME AND PASSWORD
-        User user = this.userRepository.findByUsername(requestDto.getUserid()).orElseThrow(
-                () -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다. username = " + requestDto.getUserid()));
+        User user = this.userRepository.findByUsername(requestDto.getUsername()).orElseThrow(
+                () -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다. username = " + requestDto.getUsername()));
         if (!passwordEncoder.matches(requestDto.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다. username = " + requestDto.getUserid());
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다. username = " + requestDto.getUsername());
         }
         System.out.println("user:: "+user);
 

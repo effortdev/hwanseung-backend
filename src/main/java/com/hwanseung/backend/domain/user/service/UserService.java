@@ -14,10 +14,11 @@ import org.springframework.stereotype.Service;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     /** User 조회 */
     @Transactional
-    public UserResponseDTO findById(Long id) { // 🌟 Long 복구
+    public UserResponseDTO findById(Long id) {
         User user = this.userRepository.findById(id).orElseThrow(
                 () -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다. user_id = " + id));
         return new UserResponseDTO(user);
@@ -25,28 +26,24 @@ public class UserService {
 
     /** User 수정 */
     @Transactional
-    public void update(Long id, UserRequestDTO requestDto) { // 🌟 Long 복구
+    public void update(Long id, UserRequestDTO requestDto) {
         User user = this.userRepository.findById(id).orElseThrow(
                 () -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다. user_id = " + id));
-
-        // 더티 체킹으로 값만 업데이트
-        user.setUsername(requestDto.getUsername());
-        user.setNickname(requestDto.getNickname());
-        user.setContact(requestDto.getContact());
-        user.setAddress(requestDto.getAddress());
+        this.userRepository.updateUser(requestDto);
     }
 
     /** User 삭제 */
     @Transactional
-    public void delete(Long id) { // 🌟 Long 복구
+    public void delete(Long id) {
         User user = this.userRepository.findById(id).orElseThrow(
                 () -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다. user_id = " + id));
         this.userRepository.delete(user);
     }
 
-    public boolean isUseridDuplicate(String userid) {
-        return userRepository.existsByUsername(userid);
+    public boolean isUseridDuplicate(String username) {
+        return userRepository.existsByUsername(username);
     }
+
     public boolean isNicknameDuplicate(String nickname) {
         return userRepository.existsByNickname(nickname);
     }

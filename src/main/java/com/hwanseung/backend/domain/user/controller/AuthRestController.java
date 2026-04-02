@@ -44,9 +44,9 @@ public class AuthRestController {
     }
 
     // 아이디 중복 체크
-    @GetMapping("/api/auth/check-userid")
-    public ResponseEntity<Map<String, Boolean>> checkUserid(@RequestParam("userid") String userid) {
-        boolean isDuplicate = userService.isUseridDuplicate(userid);
+    @GetMapping("/api/auth/check-username")
+    public ResponseEntity<Map<String, Boolean>> checkUserid(@RequestParam("username") String username) {
+        boolean isDuplicate = userService.isUseridDuplicate(username);
         return ResponseEntity.ok(Map.of("isDuplicate", isDuplicate));
     }
 

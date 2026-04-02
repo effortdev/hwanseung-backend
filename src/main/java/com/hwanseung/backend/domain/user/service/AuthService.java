@@ -16,10 +16,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-// 🌟 1. 지갑 관련 클래스들을 불러옵니다. (경로는 회원님의 프로젝트에 맞게 확인해 주세요!)
-import com.hwanseung.backend.domain.user.dto.PayBalance;
-import com.hwanseung.backend.domain.user.controller.PayBalanceRepository;
-
 
 @Service
 @RequiredArgsConstructor
@@ -29,22 +25,19 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
-    private final PayBalanceRepository payBalanceRepository;
     /** 로그인 */
     @Transactional
     public AuthResponseDTO login(AuthRequestDTO requestDto) {
         // CHECK USERNAME AND PASSWORD
-        User user = this.userRepository.findByUsername(requestDto.getUserid()).orElseThrow(
-                () -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다. username = " + requestDto.getUserid()));
+        User user = this.userRepository.findByUsername(requestDto.getUsername()).orElseThrow(
+                () -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다. username = " + requestDto.getUsername()));
         if (!passwordEncoder.matches(requestDto.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다. username = " + requestDto.getUserid());
         }
-        System.out.println("user:: "+user);
-
 
         // GENERATE ACCESS_TOKEN AND REFRESH_TOKEN
         String accessToken = this.jwtTokenProvider.generateAccessToken(
-                                        new UsernamePasswordAuthenticationToken(new CustomUserDetails(user), user.getPassword()));
+                new UsernamePasswordAuthenticationToken(new CustomUserDetails(user), user.getPassword()));
         String refreshToken = this.jwtTokenProvider.generateRefreshToken(
                 new UsernamePasswordAuthenticationToken(new CustomUserDetails(user), user.getPassword()));
 
@@ -71,13 +64,7 @@ public class AuthService {
         // SAVE USER ENTITY
         requestDto.setRole(Role.ROLE_USER);
         requestDto.setPassword(passwordEncoder.encode(requestDto.getPassword()));//암호화가 이루어지는 곳
-        User savedUser = this.userRepository.save(requestDto.toEntity());
-
-        PayBalance newBalance = new PayBalance();
-        newBalance.setUserId(String.valueOf(savedUser.getId())); // 방금 생성된 유저의 고유번호(예: 1) 세팅
-        newBalance.setHwanseungPay(0); // 잔액 0원 세팅
-
-        this.payBalanceRepository.save(newBalance);
+        this.userRepository.save(requestDto.toEntity());
     }
 
     /** Token 갱신 */

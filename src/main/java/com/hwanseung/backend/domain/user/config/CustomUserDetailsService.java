@@ -15,17 +15,28 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // 🌟 다시 findByUsername 으로 원상복구!
+        // 🚩 전달받은 'username'(로그인 시 입력한 아이디)을 'userid' 필드에서 찾아야 합니다.
+        System.out.println("CustomUserDetailsService loadUserByUsername 실행 (로그인 아이디: " + username + ")");
+
         User user = userRepository.findByUsername(username).orElseThrow(
                 () -> new UsernameNotFoundException("해당 아이디를 가진 유저가 존재하지 않습니다. userid = " + username));
+
         return new CustomUserDetails(user);
     }
 
-    public UserDetails loadUserByUserId(String userid) {
-        // 🌟 findByid(오타) -> findByUserid 로 변경!
-        User user = userRepository.findByUsername(userid)
-                .orElseThrow(() -> new IllegalArgumentException("유저 없음: " + userid));
+    // 필요시 추가
+    public UserDetails loadUserByUserId(Long userId) throws IllegalArgumentException {
+        System.out.println("CustomUserDetailsService loadUserByUserId 실행");
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new IllegalArgumentException("해당 유저가 존재하지 않습니다. user_id = " + userId));
         return new CustomUserDetails(user);
     }
 
+    // 필요시 추가
+    public UserDetails loadUserByEmail(String email) throws IllegalArgumentException {
+        System.out.println("CustomUserDetailsService loadUserByEmail 실행");
+        User user = userRepository.findByEmail(email).orElseThrow(
+                () -> new IllegalArgumentException("해당 유저가 존재하지 않습니다. email = " + email));
+        return new CustomUserDetails(user);
+    }
 }

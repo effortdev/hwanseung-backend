@@ -12,7 +12,7 @@ import lombok.*;
 @Builder // 빌더 패턴 사용 가능하게 추가
 public class UserRequestDTO {
     private String username;        // 로그인 아이디
-    private String name;      // 실명/이름
+    private String name;          // 실명/이름
     private String password;      // 비밀번호
     private String nickname;      // 별명
     private String birthday;      // 생년월일 (YYYY-MM-DD)
@@ -30,7 +30,7 @@ public class UserRequestDTO {
      */
     public User toEntity() {
         return User.builder()
-                .name(this.name)          // 1. userid 추가 (누락됨)
+                .name(this.name)
                 .username(this.username)
                 .password(this.password)
                 .nickname(this.nickname)

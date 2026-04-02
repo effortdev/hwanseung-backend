@@ -18,7 +18,6 @@ public class CustomUserDetailsService implements UserDetailsService {
         // 🚩 전달받은 'username'(로그인 시 입력한 아이디)을 'userid' 필드에서 찾아야 합니다.
         System.out.println("CustomUserDetailsService loadUserByUsername 실행 (로그인 아이디: " + username + ")");
 
-        // findByUsername -> findByUserid 로 변경
         User user = userRepository.findByUsername(username).orElseThrow(
                 () -> new UsernameNotFoundException("해당 아이디를 가진 유저가 존재하지 않습니다. userid = " + username));
 

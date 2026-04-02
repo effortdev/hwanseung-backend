@@ -10,7 +10,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthRequestDTO {
-    private String userid;
+    private String username;
     private String password;
     private String role;
 }

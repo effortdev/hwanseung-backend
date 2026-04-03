@@ -115,4 +115,16 @@ public class ProductService {
         return ProductDetailResponseDTO.from(product);
     }
 
+    // 상품 총 갯수
+    @Transactional(readOnly = true)
+    public long getTotalProductCount() {
+        // 실제 운영 시에는 삭제(is_deleted=false)된 상품은 제외하는 로직이 들어가는 게 좋습니다.
+        return productRepository.count();
+    }
+
+    // 판매 중인 상품 갯수
+    @Transactional(readOnly = true)
+    public long getActiveProductCount() {
+        return productRepository.countByDeletedAtIsNull();
+    }
 }

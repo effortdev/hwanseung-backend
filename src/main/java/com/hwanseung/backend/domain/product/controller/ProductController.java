@@ -12,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -50,5 +51,21 @@ public class ProductController {
         System.out.println("👉 상세 조회 요청 id = " + productId);
         ProductDetailResponseDTO productDetail = productService.getProductDetail(productId);
         return ResponseEntity.ok(productDetail);
+    }
+
+    @GetMapping("/count")
+    public ResponseEntity<Map<String, Long>> getProductCount() {
+        long count = productService.getTotalProductCount();
+        Map<String, Long> response = new HashMap<>();
+        response.put("totalCount", count);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/sellcount")
+    public ResponseEntity<Map<String, Long>> getSellProductCount() {
+        long count = productService.getActiveProductCount();
+        Map<String, Long> response = new HashMap<>();
+        response.put("sellCount", count);
+        return ResponseEntity.ok(response);
     }
 }

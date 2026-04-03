@@ -9,6 +9,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 public class UserRestController {
@@ -40,5 +43,13 @@ public class UserRestController {
         Long id = this.jwtTokenProvider.getUserIdFromToken(accessToken.substring(7));
         this.userService.delete(id);
         return ResponseEntity.status(HttpStatus.OK).body(null);
+    }
+
+    @GetMapping("/api/user/count")
+    public ResponseEntity<Map<String, Long>> getUserCount() {
+        long count = userService.getTotalUserCount();
+        Map<String, Long> response = new HashMap<>();
+        response.put("totalCount", count);
+        return ResponseEntity.ok(response);
     }
 }

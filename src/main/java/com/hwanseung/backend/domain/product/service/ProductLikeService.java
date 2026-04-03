@@ -26,6 +26,16 @@ public class ProductLikeService {
         Product product = getProduct(productId);
         User user = getUser(loginUserId);
 
+        // ✅ 본인 상품 찜 금지
+        if (product.getSellerId().equals(loginUserId)) {
+            throw new IllegalArgumentException("본인 상품은 찜할 수 없습니다.");
+        }
+
+        // ✅ 판매완료 상품 찜 금지
+        if (product.isSoldOut()) {
+            throw new IllegalArgumentException("판매완료 상품은 찜할 수 없습니다.");
+        }
+
         boolean alreadyLiked = productLikeRepository.existsByProductAndUser(product, user);
 
         if (alreadyLiked) {

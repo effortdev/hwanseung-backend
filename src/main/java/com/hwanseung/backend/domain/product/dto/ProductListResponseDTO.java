@@ -16,6 +16,7 @@ public class ProductListResponseDTO {
     private String location;
     private String sellerId;
     private String sellerNickname;
+    private String saleStatus;
     private String thumbnailUrl;
 
     public static ProductListResponseDTO from(Product product) {
@@ -34,6 +35,7 @@ public class ProductListResponseDTO {
                 .location(product.getLocation())
                 .sellerId(product.getSellerId())
                 .sellerNickname(product.getSellerNickname())
+                .saleStatus(product.getSaleStatus())
                 .thumbnailUrl(thumbnailUrl)
                 .build();
     }

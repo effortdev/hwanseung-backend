@@ -50,16 +50,20 @@ public class Product {
     @Column(name = "location", nullable = false, length = 100)
     private String location; // 거래 지역
 
+    @Builder.Default
+    @Column(name = "sale_status", nullable = false, length = 20)
+    private String saleStatus = "SALE"; // 판매상태 SALE / SOLD_OUT
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt; // 생성일
 
     @LastModifiedDate
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedAt; // 수정일
 
     @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    private LocalDateTime deletedAt; // 삭제일
 
 
     // 상품 1개 : 이미지 여러 개
@@ -67,7 +71,7 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImage> productImages = new ArrayList<>();
 
-    // 상품 수정용 메서드 - 나중에 수정 기능 만들 때 사용
+    // 수정
     public void updateProduct(String title, String category, int price, String content, String location) {
         this.title = title;
         this.category = category;
@@ -76,9 +80,24 @@ public class Product {
         this.location = location;
     }
 
-    // 소프트 삭제용 메서드
+    // 소프트 삭제
     public void deleteProduct() {
         this.deletedAt = LocalDateTime.now();
+    }
+
+    // 삭제 여부 확인
+    public boolean isDeleted() {
+        return this.deletedAt != null;
+    }
+
+    // 판매완료 처리
+    public void markAsSoldOut() {
+        this.saleStatus = "SOLD_OUT";
+    }
+
+    // 판매완료 여부
+    public boolean isSoldOut() {
+        return "SOLD_OUT".equals(this.saleStatus);
     }
 
     // 양방향 연관관계 편의 메서드

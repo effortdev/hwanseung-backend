@@ -18,6 +18,7 @@ public class ProductDetailResponseDTO {
     private String content;
     private String sellerId;
     private String sellerNickname;
+    private String saleStatus;
     private List<ProductImageResponseDTO> productImages;
 
     public static ProductDetailResponseDTO from(Product product) {
@@ -30,6 +31,7 @@ public class ProductDetailResponseDTO {
                 .content(product.getContent())
                 .sellerId(product.getSellerId())
                 .sellerNickname(product.getSellerNickname())
+                .saleStatus(product.getSaleStatus())
                 .productImages(
                         product.getProductImages().stream()
                                 .map(ProductImageResponseDTO::from)

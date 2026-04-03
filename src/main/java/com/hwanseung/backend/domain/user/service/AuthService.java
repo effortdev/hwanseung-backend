@@ -32,7 +32,7 @@ public class AuthService {
         User user = this.userRepository.findByUsername(requestDto.getUsername()).orElseThrow(
                 () -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다. username = " + requestDto.getUsername()));
         if (!passwordEncoder.matches(requestDto.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다. username = " + requestDto.getUserid());
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다. username = " + requestDto.getUsername());
         }
 
         // GENERATE ACCESS_TOKEN AND REFRESH_TOKEN

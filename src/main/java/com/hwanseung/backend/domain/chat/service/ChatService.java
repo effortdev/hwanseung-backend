@@ -1,10 +1,13 @@
 package com.hwanseung.backend.domain.chat.service;
 
+import com.hwanseung.backend.domain.chat.dto.ChatRoomListResponseDTO;
 import com.hwanseung.backend.domain.chat.entity.ChatMessage;
 import com.hwanseung.backend.domain.chat.entity.ChatRoom;
 import com.hwanseung.backend.domain.chat.entity.RoomType;
 import com.hwanseung.backend.domain.chat.repository.ChatMessageRepository;
 import com.hwanseung.backend.domain.chat.repository.ChatRoomRepository;
+import com.hwanseung.backend.domain.product.entity.Product;
+import com.hwanseung.backend.domain.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +20,7 @@ public class ChatService {
 
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final ProductRepository productRepository;
 
     // 1. 중고거래 채팅방 생성 또는 조회
     @Transactional
@@ -75,5 +79,46 @@ public class ChatService {
                     // DB에 저장하고 반환합니다.
                     return chatRoomRepository.save(newRoom);
                 });
+    }
+
+    @Transactional(readOnly = true)
+    public List<ChatRoom> findMyRooms(String userId) {
+        // 구매자로 참여한 방이거나, 판매자로 참여한 방을 모두 찾아서 반환합니다.
+        return chatRoomRepository.findByBuyerIdOrSellerId(userId, userId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ChatRoomListResponseDTO> getMyChatRooms(String userId) {
+        // 1. 내가 속한 방 원본 목록 가져오기
+        List<ChatRoom> rooms = chatRoomRepository.findByBuyerIdOrSellerId(userId, userId);
+
+        // 2. DTO로 예쁘게 변환하기
+        return rooms.stream().map(room -> {
+
+            // 🚨 관리자 1:1 채팅방(itemId가 없는 방) 예외 처리
+            if (room.getItemId() == null || room.getItemId() == 0L) {
+                return ChatRoomListResponseDTO.builder()
+                        .roomId(room.getRoomId())
+                        .buyerId(room.getBuyerId())
+                        .sellerId("admin")
+                        .itemName("1:1 문의")
+                        .lastMessage("문의 채팅방입니다.")
+                        .unreadCount(0)
+                        .build();
+            }
+
+            // 🚨 일반 중고거래 방: itemId로 상품 테이블을 조회해서 이름을 가져옵니다!
+            Product product = productRepository.findById(room.getItemId().intValue()).orElse(null);
+            String realItemName = (product != null) ? product.getTitle() : "삭제된 상품입니다.";
+
+            return ChatRoomListResponseDTO.builder()
+                    .roomId(room.getRoomId())
+                    .buyerId(room.getBuyerId())
+                    .sellerId(room.getSellerId())
+                    .itemName(realItemName) // 드디어 상품 이름 세팅!
+                    .lastMessage("최신 대화 내역이 없습니다.") // (나중에 메시지 테이블 조회로 고도화 가능)
+                    .unreadCount(0)
+                    .build();
+        }).toList();
     }
 }

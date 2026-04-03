@@ -3,9 +3,11 @@ package com.hwanseung.backend.domain.product.service;
 import com.hwanseung.backend.domain.product.dto.ProductCreateRequestDTO;
 import com.hwanseung.backend.domain.product.dto.ProductDetailResponseDTO;
 import com.hwanseung.backend.domain.product.dto.ProductListResponseDTO;
+import com.hwanseung.backend.domain.product.dto.ProductUpdateRequestDTO;
 import com.hwanseung.backend.domain.product.entity.Product;
 import com.hwanseung.backend.domain.product.entity.ProductImage;
 import com.hwanseung.backend.domain.product.repository.ProductRepository;
+import com.hwanseung.backend.domain.user.config.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -31,8 +33,10 @@ public class ProductService {
 
     public Integer createProduct(ProductCreateRequestDTO requestDTO, Authentication authentication) throws IOException {
 
-        // 판매자 아이디는 로그인 사용자 기준으로 처리
-        String sellerId = authentication.getName();
+        CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
+
+        String sellerId = loginUser.getUsername();   // 아이디
+        String sellerNickname = loginUser.getNickname(); // 닉네임
 
         Product product = Product.builder()
                 .title(requestDTO.getTitle())
@@ -41,6 +45,8 @@ public class ProductService {
                 .location(requestDTO.getLocation())
                 .content(requestDTO.getContent())
                 .sellerId(sellerId)
+                .sellerNickname(sellerNickname)
+                .saleStatus("SALE")
                 .build();
 
         List<MultipartFile> images = requestDTO.getImages();
@@ -72,13 +78,58 @@ public class ProductService {
     // 상품 목록 조회
     @Transactional(readOnly = true)
     public List<ProductListResponseDTO> getProductList() {
-        List<Product> products = productRepository.findByDeletedAtIsNullOrderByCreatedAtDesc();
+        List<Product> products = productRepository.findAllVisibleOrderBySaleStatusAndCreatedAtDesc();
 
         return products.stream()
                 .map(ProductListResponseDTO::from)
                 .toList();
     }
 
+    // 상품 수정
+    public void updateProduct(Integer productId, ProductUpdateRequestDTO requestDTO, Authentication authentication) {
+
+        CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
+        String loginUserId = loginUser.getUsername();
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("상품 없음"));
+
+        if (product.isDeleted()) {
+            throw new RuntimeException("삭제된 상품은 수정할 수 없습니다.");
+        }
+
+        if (!product.getSellerId().equals(loginUserId)) {
+            throw new RuntimeException("수정 권한이 없습니다.");
+        }
+
+        product.updateProduct(
+                requestDTO.getTitle(),
+                requestDTO.getCategory(),
+                requestDTO.getPrice(),
+                requestDTO.getContent(),
+                requestDTO.getLocation()
+        );
+    }
+
+    // 상품 삭제 (soft delete)
+    public void deleteProduct(Integer productId, Authentication authentication) {
+
+        CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
+        String loginUserId = loginUser.getUsername();
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("상품 없음"));
+
+        if (product.isDeleted()) {
+            throw new RuntimeException("이미 삭제된 상품입니다.");
+        }
+
+        if (!product.getSellerId().equals(loginUserId)) {
+            throw new RuntimeException("삭제 권한이 없습니다.");
+        }
+
+        product.deleteProduct();
+    }
 
     // 파일 저장 + ProductImage 엔티티 생성
     private ProductImage saveProductImage(MultipartFile image) throws IOException {
@@ -109,10 +160,29 @@ public class ProductService {
     // 상품 상세 조회
     @Transactional(readOnly = true)
     public ProductDetailResponseDTO getProductDetail(Integer productId) {
+        Product product = productRepository.findByProductIdAndDeletedAtIsNull(productId)
+                .orElseThrow(() -> new RuntimeException("상품이 없거나 삭제된 상품입니다."));
+
+        return ProductDetailResponseDTO.from(product);
+    }
+
+    // ✅ [추가] 판매완료 처리
+    public void markProductAsSoldOut(Integer productId, Authentication authentication) {
+        CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
+        String loginUserId = loginUser.getUsername();
+
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("상품 없음"));
 
-        return ProductDetailResponseDTO.from(product);
+        if (product.getDeletedAt() != null) {
+            throw new RuntimeException("삭제된 상품입니다.");
+        }
+
+        if (!product.getSellerId().equals(loginUserId)) {
+            throw new RuntimeException("판매완료 처리 권한이 없습니다.");
+        }
+
+        product.markAsSoldOut();
     }
 
     // 상품 총 갯수

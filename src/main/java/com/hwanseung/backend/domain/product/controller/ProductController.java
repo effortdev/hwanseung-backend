@@ -3,6 +3,7 @@ package com.hwanseung.backend.domain.product.controller;
 import com.hwanseung.backend.domain.product.dto.ProductCreateRequestDTO;
 import com.hwanseung.backend.domain.product.dto.ProductDetailResponseDTO;
 import com.hwanseung.backend.domain.product.dto.ProductListResponseDTO;
+import com.hwanseung.backend.domain.product.dto.ProductUpdateRequestDTO;
 import com.hwanseung.backend.domain.product.entity.Product;
 import com.hwanseung.backend.domain.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -67,5 +68,48 @@ public class ProductController {
         Map<String, Long> response = new HashMap<>();
         response.put("sellCount", count);
         return ResponseEntity.ok(response);
+    }
+
+    // 상품 수정
+    @PutMapping("/{productId}")
+    public ResponseEntity<?> updateProduct(
+            @PathVariable Integer productId,
+            @RequestBody ProductUpdateRequestDTO requestDTO,
+            Authentication authentication
+    ) {
+        productService.updateProduct(productId, requestDTO, authentication);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "상품 수정 완료",
+                "productId", productId
+        ));
+    }
+
+    // 상품 삭제
+    @DeleteMapping("/{productId}")
+    public ResponseEntity<?> deleteProduct(
+            @PathVariable Integer productId,
+            Authentication authentication
+    ) {
+        productService.deleteProduct(productId, authentication);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "상품 삭제 완료",
+                "productId", productId
+        ));
+    }
+
+    // 판매완료 처리
+    @PatchMapping("/{productId}/sold-out")
+    public ResponseEntity<?> markProductAsSoldOut(
+            @PathVariable Integer productId,
+            Authentication authentication
+    ) {
+        productService.markProductAsSoldOut(productId, authentication);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "판매완료 처리되었습니다.",
+                "productId", productId
+        ));
     }
 }

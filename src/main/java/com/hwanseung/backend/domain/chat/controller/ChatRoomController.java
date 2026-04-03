@@ -27,8 +27,16 @@ public class ChatRoomController {
 
     // [React 호출 2] 채팅방에 입장했을 때 이전 대화 기록 불러오기
     @GetMapping("/room/{roomId}/messages")
-    public ResponseEntity<List<ChatMessage>> getChatHistory(@PathVariable("roomId") String roomId) {
-        List<ChatMessage> messages = chatService.getChatHistory(roomId);
+    public ResponseEntity<List<ChatMessage>> getChatHistory(
+            @PathVariable("roomId") String roomId,
+            Authentication authentication // 💡 [1] 시큐리티에서 현재 로그인한 유저 정보를 받아옵니다.
+    ) {
+        // 💡 [2] 토큰에서 내 아이디를 꺼냅니다.
+        String userId = authentication.getName();
+
+        // 💡 [3] 방 번호와 내 아이디를 같이 서비스로 넘겨줍니다! (읽음 처리를 위해)
+        List<ChatMessage> messages = chatService.getChatHistory(roomId, userId);
+
         return ResponseEntity.ok(messages);
     }
 

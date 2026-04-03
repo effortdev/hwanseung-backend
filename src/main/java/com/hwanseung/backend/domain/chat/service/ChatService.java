@@ -95,30 +95,46 @@ public class ChatService {
         // 2. DTO로 예쁘게 변환하기
         return rooms.stream().map(room -> {
 
-            // 🚨 관리자 1:1 채팅방(itemId가 없는 방) 예외 처리
+            // 🚨 [1] 관리자 1:1 채팅방(itemId가 없는 방) 예외 처리
             if (room.getItemId() == null || room.getItemId() == 0L) {
+                int unreadAdmin = chatMessageRepository.countByRoomIdAndSenderIdNotAndIsReadFalse(room.getRoomId(), userId);
                 return ChatRoomListResponseDTO.builder()
                         .roomId(room.getRoomId())
                         .buyerId(room.getBuyerId())
                         .sellerId("admin")
                         .itemName("1:1 문의")
                         .lastMessage("문의 채팅방입니다.")
-                        .unreadCount(0)
+                        .unreadCount(unreadAdmin)
                         .build();
             }
 
-            // 🚨 일반 중고거래 방: itemId로 상품 테이블을 조회해서 이름을 가져옵니다!
+            // 🚨 [2] 일반 중고거래 방: 여기가 아까 누락되었던 'realItemName'을 만드는 곳입니다!
             Product product = productRepository.findById(room.getItemId().intValue()).orElse(null);
             String realItemName = (product != null) ? product.getTitle() : "삭제된 상품입니다.";
 
+            // 🚨 [3] 안 읽은 메시지 개수 세기!
+            int unreadMessages = chatMessageRepository.countByRoomIdAndSenderIdNotAndIsReadFalse(room.getRoomId(), userId);
+
+            // 🚨 [4] DTO 조립
             return ChatRoomListResponseDTO.builder()
                     .roomId(room.getRoomId())
                     .buyerId(room.getBuyerId())
                     .sellerId(room.getSellerId())
-                    .itemName(realItemName) // 드디어 상품 이름 세팅!
-                    .lastMessage("최신 대화 내역이 없습니다.") // (나중에 메시지 테이블 조회로 고도화 가능)
-                    .unreadCount(0)
+                    .itemName(realItemName) // 💡 이제 위에서 찾은 이름을 쏙 넣습니다! 에러 해결!
+                    .lastMessage("최신 대화 내역이 없습니다.")
+                    .unreadCount(unreadMessages) // 💡 진짜 안 읽은 숫자 세팅!
                     .build();
-        }).toList();
+
+        }).toList(); // Java 16 이상이면 .toList() 사용 (11 이하면 .collect(Collectors.toList()) 사용)
+    }
+
+    @Transactional // 🚨 업데이트 쿼리가 있으므로 트랜잭션 필수!
+    public List<ChatMessage> getChatHistory(String roomId, String userId) {
+
+        // 1. 방에 들어왔으니, 이 방에서 상대방이 보낸 메시지를 전부 읽음(true) 처리합니다!
+        chatMessageRepository.markMessagesAsRead(roomId, userId);
+
+        // 2. 그리고 대화 기록을 싹 불러와서 프론트로 던져줍니다.
+        return chatMessageRepository.findByRoomIdOrderByCreatedAtAsc(roomId);
     }
 }

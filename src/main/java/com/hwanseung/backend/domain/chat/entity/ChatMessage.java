@@ -34,4 +34,7 @@ public class ChatMessage {
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt; // 보낸 시간
+
+    @Column(nullable = false)
+    private boolean isRead = false;
 }

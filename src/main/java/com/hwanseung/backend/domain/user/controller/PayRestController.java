@@ -3,6 +3,7 @@ package com.hwanseung.backend.domain.user.controller;
 import com.hwanseung.backend.domain.user.config.JwtTokenProvider;
 import com.hwanseung.backend.domain.user.dto.PayChargeVO;
 import com.hwanseung.backend.domain.user.dto.PayHistory;
+import com.hwanseung.backend.domain.user.dto.PayUseVO;
 import com.hwanseung.backend.domain.user.svc.PayService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -157,5 +158,29 @@ public class PayRestController {
         int myBalance = payService.getBalance(String.valueOf(userId));
 
         return ResponseEntity.status(HttpStatus.OK).body(myBalance);
+    }
+    @PostMapping("/use")
+    public ResponseEntity<?> usePoint(@RequestHeader("Authorization") String accessToken,
+                                      @RequestBody PayUseVO useVO) {
+        try {
+            // 1. 토큰에서 유저 고유번호(id) 꺼내기
+            Long userId = this.jwtTokenProvider.getUserIdFromToken(accessToken.substring(7));
+
+            // 2. 서비스 호출하여 결제(차감) 진행
+            boolean isSuccess = payService.useHwanseungPay(String.valueOf(userId), useVO);
+
+            if (isSuccess) {
+                // 성공 시 프론트엔드로 success 메시지 전달
+                return ResponseEntity.status(HttpStatus.OK).body("success");
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("fail");
+            }
+        } catch (IllegalArgumentException e) {
+            // 🌟 잔액이 부족할 경우, Service에서 던진 에러 메시지를 프론트엔드로 그대로 전달!
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 에러가 발생했습니다.");
+        }
     }
 }

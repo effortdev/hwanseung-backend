@@ -23,11 +23,13 @@ public class User {
     @Column(name = "id")
     private Long id;
 
-    @Column(nullable = false, length = 50, unique = true)
-    private String username; // 로그인 아이디 (인덱스 3)
+    // 🌟 핵심 1: 이제 DB의 'username' 컬럼과 정직하게 연결합니다.
+    @Column(name = "username", nullable = false, length = 50, unique = true)
+    private String username; // 👈 이게 이제부터 진짜 로그인 아이디입니다!
 
-    @Column(nullable = false, length = 50)
-    private String name; // 사용자 이름 (실명 등)
+    // 🌟 핵심 2: 실명은 DB의 'name' 컬럼과 연결합니다.
+    @Column(name = "name", nullable = false, length = 50)
+    private String name; // 👈 사용자 실명
 
     @Column(nullable = false, length = 100)
     private String password;

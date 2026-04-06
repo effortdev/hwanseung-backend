@@ -41,8 +41,10 @@ public class ProductController {
 
     // 상품 목록 조회
     @GetMapping
-    public ResponseEntity<List<ProductListResponseDTO>> getProductList() {
-        List<ProductListResponseDTO> productList = productService.getProductList();
+    public ResponseEntity<List<ProductListResponseDTO>> getProductList(Authentication authentication) {
+        String loginUserId = authentication != null ? authentication.getName() : null;
+
+        List<ProductListResponseDTO> productList = productService.getProductList(loginUserId);
         return ResponseEntity.ok(productList);
     }
 

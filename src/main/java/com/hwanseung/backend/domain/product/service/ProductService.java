@@ -6,8 +6,11 @@ import com.hwanseung.backend.domain.product.dto.ProductListResponseDTO;
 import com.hwanseung.backend.domain.product.dto.ProductUpdateRequestDTO;
 import com.hwanseung.backend.domain.product.entity.Product;
 import com.hwanseung.backend.domain.product.entity.ProductImage;
+import com.hwanseung.backend.domain.product.repository.ProductLikeRepository;
 import com.hwanseung.backend.domain.product.repository.ProductRepository;
 import com.hwanseung.backend.domain.user.config.CustomUserDetails;
+import com.hwanseung.backend.domain.user.entity.User;
+import com.hwanseung.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -25,6 +28,8 @@ import java.util.UUID;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final ProductLikeRepository productLikeRepository;
+    private final UserRepository userRepository;
 
     // 실제 파일 저장 폴더
     private static final String UPLOAD_DIR = "C:/bImg/product/";
@@ -77,11 +82,27 @@ public class ProductService {
 
     // 상품 목록 조회
     @Transactional(readOnly = true)
-    public List<ProductListResponseDTO> getProductList() {
+    public List<ProductListResponseDTO> getProductList(String loginUserId) {
         List<Product> products = productRepository.findAllVisibleOrderBySaleStatusAndCreatedAtDesc();
 
+        User loginUser = null;
+        if (loginUserId != null && !loginUserId.isBlank()) {
+            loginUser = userRepository.findByUsername(loginUserId).orElse(null);
+        }
+
+        User finalLoginUser = loginUser;
+
         return products.stream()
-                .map(ProductListResponseDTO::from)
+                .map(product -> {
+                    long likeCount = productLikeRepository.countByProduct(product);
+
+                    boolean liked = false;
+                    if (finalLoginUser != null) {
+                        liked = productLikeRepository.existsByProductAndUser(product, finalLoginUser);
+                    }
+
+                    return ProductListResponseDTO.from(product, likeCount, liked);
+                })
                 .toList();
     }
 

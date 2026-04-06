@@ -106,6 +106,20 @@ public class ProductService {
                 .toList();
     }
 
+    //주변 매물
+    @Transactional(readOnly = true)
+    public List<ProductListResponseDTO> getNearbyProducts(double lat, double lng, double radius) {
+
+        // 1. 방금 만든 레포지토리 쿼리로 반경 내 상품 찾기
+        List<Product> nearbyProducts = productRepository.findNearbyProducts(lat, lng, radius);
+
+        // 2. Entity를 DTO로 변환해서 반환 (찜 여부는 이 상황에선 간단히 false/0으로 처리하거나, 필요시 위 로직처럼 추가)
+        return nearbyProducts.stream()
+                .map(product -> ProductListResponseDTO.from(product, 0L, false))
+                .toList();
+    }
+
+
     // 상품 수정
     public void updateProduct(Integer productId, ProductUpdateRequestDTO requestDTO, Authentication authentication) {
 

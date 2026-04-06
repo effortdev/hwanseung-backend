@@ -22,7 +22,9 @@ public class UserRequestDTO {
     private String zipCode;       // 우편번호
     private String address;       // 주소
     private String detailAddress; // 상세 주소
-    private Role role;
+    private Role role; //역할
+    private String neighborhood; // 동네 이름 (예: 안양동)
+    private boolean isNeighborhoodAuthenticated; // 인증 여부 (true/false)
 
 
     /**

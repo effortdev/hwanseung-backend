@@ -40,6 +40,12 @@ public class UserService {
         user.setAddress(requestDto.getAddress());
         user.setDetailAddress(requestDto.getDetailAddress());
         user.setZipCode(requestDto.getZipCode());
+
+        if (requestDto.getNeighborhood() != null) {
+            user.setNeighborhood(requestDto.getNeighborhood());
+            user.setNeighborhoodAuthenticated(true); // 동네가 들어오면 인증 완료로 처리!
+        }
+
     }
     /** User 삭제 */
     @Transactional

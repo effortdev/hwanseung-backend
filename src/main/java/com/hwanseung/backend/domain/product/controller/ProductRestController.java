@@ -1,11 +1,15 @@
 package com.hwanseung.backend.domain.product.controller;
 
+import com.hwanseung.backend.domain.product.dto.ProductListResponseDTO;
+import com.hwanseung.backend.domain.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 // import com.hwanseung.backend.domain.product.service.ProductService;
 // import com.hwanseung.backend.domain.product.dto.ProductResponseDTO;
@@ -16,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProductRestController {
 
     // 🌟 핵심: 창고에서 물건을 찾아줄 관리자(Service)를 나중에 여기에 연결합니다.
-    // private final ProductService productService;
+     private final ProductService productService;
 
     /**
      * 내 근처 매물 조회 API
@@ -38,14 +42,9 @@ public class ProductRestController {
         🌟 실제 개발 로직의 흐름 (주석을 참고하세요)
         1. productService.findNearby(lat, lng, radius)를 호출하여 DB에서 가까운 상품을 찾습니다.
         2. 찾은 목록(List<ProductResponseDTO>)을 ResponseEntity.ok()에 담아 프론트엔드로 보냅니다.
+        예시 코드: */
 
-        예시 코드:
-        List<ProductResponseDTO> nearbyProducts = productService.findNearby(lat, lng, radius);
+        List<ProductListResponseDTO> nearbyProducts = productService.getNearbyProducts(lat, lng, radius);
         return ResponseEntity.status(HttpStatus.OK).body(nearbyProducts);
-        */
-
-        // 아직 Service 계층을 만들지 않았으므로,
-        // 프론트엔드와 API 통신이 잘 되는지 확인하기 위한 임시 메시지를 반환합니다.
-        return ResponseEntity.status(HttpStatus.OK).body("내 근처 매물 API 연결 성공! (수신된 좌표: " + lat + ", " + lng + ")");
     }
 }

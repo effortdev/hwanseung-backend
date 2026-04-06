@@ -1,7 +1,7 @@
 package com.hwanseung.backend.domain.user.repository;
 
-import com.hwanseung.backend.domain.user.entity.User;
 import com.hwanseung.backend.domain.user.dto.UserRequestDTO;
+import com.hwanseung.backend.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -13,6 +13,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
     Optional<User> findByName(String name);
     Optional<User> findByEmail(String email);
+    Optional<User> findByNickname(String Nickname);
 
     boolean existsByUsername(String username);
     boolean existsByNickname(String nickname);

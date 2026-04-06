@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @Setter
-@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -24,11 +23,13 @@ public class User {
     @Column(name = "id")
     private Long id;
 
-    @Column(nullable = false, length = 50, unique = true)
-    private String username; // 로그인 아이디 (인덱스 3)
+    // 🌟 핵심 1: 이제 DB의 'username' 컬럼과 정직하게 연결합니다.
+    @Column(name = "username", nullable = false, length = 50, unique = true)
+    private String username; // 👈 이게 이제부터 진짜 로그인 아이디입니다!
 
-    @Column(nullable = false, length = 50)
-    private String name; // 사용자 이름 (실명 등)
+    // 🌟 핵심 2: 실명은 DB의 'name' 컬럼과 연결합니다.
+    @Column(name = "name", nullable = false, length = 50)
+    private String name; // 👈 사용자 실명
 
     @Column(nullable = false, length = 100)
     private String password;
@@ -71,6 +72,14 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Auth auth;
 
+    @Column(name = "neighborhood", length = 50)
+    private String neighborhood;
+
+    // MySQL의 TINYINT(1)은 Java의 boolean과 완벽하게 1:1로 매칭됩니다.
+    // columnDefinition = "tinyint(1) default 0" 옵션을 주면 DB와 동기화하기 좋습니다.
+    @Column(name = "is_neighborhood_authenticated", nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
+    private boolean isNeighborhoodAuthenticated = false;
+
     @Builder
     public User(String email, String contact, String username, String password, Role role,
                 String name, String nickname, String birthday, String gender,
@@ -87,6 +96,7 @@ public class User {
         this.zipCode = zipCode;
         this.address = address;
         this.detailAddress = detailAddress;
+
     }
 
     @PrePersist

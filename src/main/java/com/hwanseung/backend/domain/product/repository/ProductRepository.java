@@ -1,6 +1,7 @@
 package com.hwanseung.backend.domain.product.repository;
 
 import com.hwanseung.backend.domain.product.entity.Product;
+import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -31,4 +32,26 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     // 삭제되지 않은 상품 단건 조회
     Optional<Product> findByProductIdAndDeletedAtIsNull(Integer productId);
+
+
+    // 🌟 내 주변 매물 찾기 쿼리 (Haversine 공식)
+    // 6371은 지구의 반지름(km)입니다.
+    @Query(value = """
+        SELECT * FROM product p
+        WHERE p.deleted_at IS NULL
+        AND p.sale_status = 'SALE'
+        AND (
+            6371 * acos(
+                cos(radians(:userLat)) 
+                * cos(radians(p.lat)) 
+                * cos(radians(p.lng) - radians(:userLng)) 
+                + sin(radians(:userLat)) 
+                * sin(radians(p.lat))
+            )
+        ) <= :radius
+        ORDER BY p.created_at DESC
+    """, nativeQuery = true)
+    List<Product> findNearbyProducts(@Param("userLat") double userLat,
+                                     @Param("userLng") double userLng,
+                                     @Param("radius") double radius);
 }

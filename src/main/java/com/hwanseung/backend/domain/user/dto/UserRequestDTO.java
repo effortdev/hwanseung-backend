@@ -22,7 +22,9 @@ public class UserRequestDTO {
     private String zipCode;       // 우편번호
     private String address;       // 주소
     private String detailAddress; // 상세 주소
-    private Role role;
+    private Role role; //역할
+    private String neighborhood; // 동네 이름 (예: 안양동)
+    private boolean isNeighborhoodAuthenticated; // 인증 여부 (true/false)
 
 
     /**
@@ -34,14 +36,14 @@ public class UserRequestDTO {
                 .username(this.username)
                 .password(this.password)
                 .nickname(this.nickname)
-                .birthday(this.birthday)
+                .birthday(this.birthday)      // 2. 필드명 통일 (birthDate -> birthday)
                 .contact(this.contact)
                 .email(this.email)
                 .gender(this.gender)
                 .zipCode(this.zipCode)
                 .address(this.address)
                 .detailAddress(this.detailAddress)
-                .role(this.role)         // 기본 권한 설정 (회원가입 시 보통 USER)
+                .role(this.role)         // 3. 기본 권한 설정 (회원가입 시 보통 USER)
                 .build();
     }
 }

@@ -55,8 +55,10 @@ dependencies {
     testImplementation 'org.springframework.batch:spring-batch-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    // OAuth2 Client
-    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    // 인증관련
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation 'net.nurigo:sdk:4.3.0'
+    implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
 }
 
 tasks.named('test') {

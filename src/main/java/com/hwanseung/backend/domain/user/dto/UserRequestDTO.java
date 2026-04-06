@@ -3,6 +3,7 @@ package com.hwanseung.backend.domain.user.dto;
 import com.hwanseung.backend.domain.user.entity.Role;
 import com.hwanseung.backend.domain.user.entity.User;
 import lombok.*;
+import org.springframework.util.StringUtils;
 
 @Getter
 @Setter
@@ -30,18 +31,26 @@ public class UserRequestDTO {
      */
     public User toEntity() {
         return User.builder()
-                .name(this.name)
                 .username(this.username)
+                .name(this.name)
                 .password(this.password)
                 .nickname(this.nickname)
-                .birthday(this.birthday)
-                .contact(this.contact)
-                .email(this.email)
-                .gender(this.gender)
-                .zipCode(this.zipCode)
-                .address(this.address)
-                .detailAddress(this.detailAddress)
-                .role(this.role)         // 기본 권한 설정 (회원가입 시 보통 USER)
+                // 선택 입력 항목들: 빈 문자열이면 null로 처리
+                .birthday(hasText(this.birthday))
+                .contact(hasText(this.contact))
+                .email(hasText(this.email))
+                .gender(hasText(this.gender))
+                .zipCode(hasText(this.zipCode))
+                .address(hasText(this.address))
+                .detailAddress(hasText(this.detailAddress))
+                .role(this.role)
                 .build();
+    }
+
+    /**
+     * 문자열이 비어있거나 공백만 있다면 null을 반환하고, 값이 있다면 그대로 반환합니다.
+     */
+    private String hasText(String value) {
+        return StringUtils.hasText(value) ? value : null;
     }
 }

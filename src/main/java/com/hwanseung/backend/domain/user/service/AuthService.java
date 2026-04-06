@@ -22,8 +22,32 @@ import org.springframework.stereotype.Service;
 public class AuthService {
     private final UserRepository userRepository;
     private final AuthRepository authRepository;
+    private final VerificationService verificationService;
+    private final MailService mailService;
+    private final SmsService smsService;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+
+    /** 이메일 인증 요청 로직 */
+    public void requestEmailVerification(String email) {
+        if (userRepository.existsByEmail(email)) {
+            throw new IllegalStateException("이미 가입된 이메일입니다.");
+        }
+        String code = verificationService.createCode(email);
+        mailService.sendEmail(email, code);
+    }
+
+    /** SMS 인증 요청 로직 */
+    public void requestSmsVerification(String phoneNumber) {
+        // 전화번호 중복 체크가 필요하다면 여기에 추가
+        String code = verificationService.createCode(phoneNumber);
+        smsService.sendSms(phoneNumber, code);
+    }
+
+    /** 공통 인증 확인 로직 */
+    public boolean checkVerification(String key, String code) {
+        return verificationService.verify(key, code);
+    }
 
     /** 로그인 */
     @Transactional

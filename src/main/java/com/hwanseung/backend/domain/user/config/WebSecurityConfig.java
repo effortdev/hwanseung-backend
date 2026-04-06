@@ -35,7 +35,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/products/**").authenticated()
 
                         // 채팅
-                        .requestMatchers("/ws-chat/**").permitAll()
+                        .requestMatchers("/ws-chat/**").authenticated()
 
                         // 중복체크 관련 모든 요청에 대해 아무나 허용
                         .requestMatchers("/api/user/check/**").permitAll()
@@ -54,6 +54,9 @@ public class WebSecurityConfig {
 
                         // 기타 모든 요청에 대해 승인된 사용자만 허용
                         .requestMatchers("/api/**").authenticated()
+
+                        // 그 외 나머지 모든 요청(정적 리소스 등)은 허용
+                        .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

@@ -18,6 +18,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByNickname(String nickname);
     boolean existsByEmail(String email);
 
+    long count();
+
     @Modifying
     @Query("UPDATE User u SET u.nickname = :#{#dto.nickname}, u.email = :#{#dto.email}, " +
             "u.contact = :#{#dto.contact}, u.address = :#{#dto.address}, " +

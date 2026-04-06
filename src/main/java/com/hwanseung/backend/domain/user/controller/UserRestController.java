@@ -22,9 +22,9 @@ public class UserRestController {
     /** 회원정보 조회 API */
     @GetMapping("/api/user")
     public ResponseEntity<?> findUser(@RequestHeader("Authorization") String accessToken) {
+        // 🌟 토큰에서 Long id를 꺼냅니다!
         Long id = this.jwtTokenProvider.getUserIdFromToken(accessToken.substring(7));
         UserResponseDTO userResponseDto = this.userService.findById(id);
-        System.out.println("userResponseDto : "+userResponseDto);
         return ResponseEntity.status(HttpStatus.OK).body(userResponseDto);
     }
 
@@ -32,6 +32,7 @@ public class UserRestController {
     @PutMapping("/api/user")
     public ResponseEntity<?> updateUser(@RequestHeader("Authorization") String accessToken,
                                         @RequestBody UserRequestDTO requestDto) {
+        // 🌟 토큰에서 Long id를 꺼냅니다!
         Long id = this.jwtTokenProvider.getUserIdFromToken(accessToken.substring(7));
         this.userService.update(id, requestDto);
         return ResponseEntity.status(HttpStatus.OK).body(null);
@@ -40,6 +41,7 @@ public class UserRestController {
     /** 회원정보 삭제 API */
     @DeleteMapping("/api/user")
     public ResponseEntity<?> deleteUser(@RequestHeader("Authorization") String accessToken) {
+        // 🌟 토큰에서 Long id를 꺼냅니다!
         Long id = this.jwtTokenProvider.getUserIdFromToken(accessToken.substring(7));
         this.userService.delete(id);
         return ResponseEntity.status(HttpStatus.OK).body(null);

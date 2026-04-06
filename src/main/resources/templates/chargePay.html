@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+    <html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>환승페이 충전하기 | 환승마켓(아나바다)</title>
+
+    <link rel="stylesheet" href="/css/common.css" th:href="@{/css/common.css}">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.iamport.kr/v1/iamport.js"></script>
+
+    <script>
+        // 1. 아임포트 초기화 (본인의 가맹점 식별코드를 입력하세요)
+        IMP.init('imp_apikey'); // 예: 'imp12345678'
+
+        // 충전할 금액을 저장할 변수
+        let selectedAmount = 0;
+
+        // [UI 로직] 금액 버튼 클릭 시 실행되는 함수
+        function selectAmount(amount, btnElement) {
+            selectedAmount = amount;
+
+            // 모든 버튼의 'active' 클래스 제거
+            $('.amount-btn').removeClass('active');
+            // 클릭한 버튼에만 'active' 클래스 추가
+            $(btnElement).addClass('active');
+
+            // 직접 입력창 초기화
+            $('#custom_amount').val('');
+        }
+
+        // [UI 로직] 직접 입력창에 입력 시 실행되는 함수
+        function inputCustomAmount(inputElement) {
+            let amount = parseInt(inputElement.value);
+            if (!isNaN(amount) && amount > 0) {
+                selectedAmount = amount;
+                // 금액 버튼의 'active' 클래스 제거
+                $('.amount-btn').removeClass('active');
+            } else {
+                selectedAmount = 0;
+            }
+        }
+
+        // 2. 아임포트 결제창 호출 및 검증 로직 (기존 로직 활용)
+        function chargePay() {
+            if (selectedAmount <= 0) {
+                alert("충전할 금액을 선택하거나 입력해주세요.");
+                return;
+            }
+
+            // [주문번호 생성] 예: charge-고유ID (실무에선 crypto.randomUUID() 등을 활용)
+            let merchant_uid = `charge-${Date.now()}`;
+
+            // 2-1. 아임포트 결제창 호출
+            IMP.request_pay({
+                channelKey: 'channel_key', // 아임포트 채널키
+                pay_method: "card",          // 결제 수단 (카드)
+                merchant_uid: merchant_uid,  // 우리가 생성한 고유 주문번호
+                name: "환승페이 충전",        // 결제 상품명
+                amount: selectedAmount,      // 충전할 금액
+                buyer_email: "test@hwanseung.com", // [중요] 로그인한 사용자 정보로 대체해야 함
+                buyer_name: "홍길동",
+                buyer_tel: "010-1234-5678"
+            }, function (response) {
+                // 3. 결제창 종료 후 콜백 함수
+                if (response.error_code != null) {
+                    alert('결제를 취소했거나 실패했습니다: ' + response.error_msg);
+                    return;
+                }
+
+                // 결제가 성공한 것처럼 보이면, 서버(스프링)로 실제 검증을 요청합니다.
+                // VO 양식에 맞춰 데이터를 전달합니다.
+                verifyAndCharge(response.imp_uid, response.merchant_uid, selectedAmount);
+            });
+        }
+
+        // [통신 로직] 서버에 결제 검증 및 포인트 충전을 요청하는 함수 (기존 로직 유지)
+        function verifyAndCharge(imp_uid, merchant_uid, requestedAmount) {
+            $.ajax({
+                url: "/verifyCharge",
+                method: "post",
+                data: JSON.stringify({
+                    imp_uid: imp_uid,
+                    merchant_uid: merchant_uid,
+                    amount: requestedAmount // [중요] 사용자가 요청한 금액을 VO의 amount 필드에 매핑
+                }),
+                contentType: "application/json; charset=UTF-8",
+                success: function(res) {
+                    if(res === "success") {
+                        alert("환승페이 충전이 완료되었습니다!");
+                        location.href = "/index"; // 충전 성공 시 메인으로 이동
+                    } else {
+                        alert("결제 검증에 실패했습니다. 관리자에게 문의하세요.");
+                    }
+                },
+                error: function(err) {
+                    console.log('err', err);
+                    alert("서버 통신 중 오류가 발생했습니다.");
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+
+<header class="header">
+    <div class="container">
+        <a href="/index" class="logo">
+            <img src="/path/to/your/anaconda_logo.png" alt="환승마켓 로고">
+            환승마켓(아나바다)
+        </a>
+        <div class="user-menu">
+            <a href="/mypage"><i class="fas fa-user"></i> 마이페이지</a>
+        </div>
+    </div>
+</header>
+
+<main class="main-content">
+    <div class="container">
+        <div class="charge-card">
+
+            <h1 class="page-title">
+                <i class="fas fa-satellite"></i>
+                환승페이 충전하기
+            </h1>
+
+            <div class="amount-selection">
+                <button type="button" class="amount-btn" onclick="selectAmount(10000, this)">1만 원</button>
+                <button type="button" class="amount-btn" onclick="selectAmount(30000, this)">3만 원</button>
+                <button type="button" class="amount-btn" onclick="selectAmount(50000, this)">5만 원</button>
+                <button type="button" class="amount-btn" onclick="selectAmount(100000, this)">10만 원</button>
+                <button type="button" class="amount-btn" onclick="selectAmount(200000, this)">20만 원</button>
+                <button type="button" class="amount-btn" onclick="selectAmount(300000, this)">30만 원</button>
+            </div>
+
+            <div class="custom-amount-wrap">
+                <input type="number" id="custom_amount" placeholder="직접 입력 (1,000원 단위)" oninput="inputCustomAmount(this)">
+                <span class="unit">원</span>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid #EEE; margin: 30px 0;">
+
+            <button type="button" class="charge-submit-btn" onclick="chargePay()">
+                <i class="fas fa-dragon"></i>
+                환승페이 충전하기
+            </button>
+
+        </div>
+    </div>
+</main>
+
+<footer class="footer">
+    <div class="container">
+        <p>&copy; 2024 환승마켓(아나바다) Inc. All Rights Reserved.</p>
+        <p>우주 쓰레기를 순환시켜 지구를 지킵니다.</p>
+    </div>
+</footer>
+
+</body>
+</html>

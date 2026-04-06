@@ -1,5 +1,6 @@
 package com.hwanseung.backend.domain.user.entity;
 
+import com.hwanseung.backend.domain.admin.dto.Status;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -71,10 +72,19 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Auth auth;
 
+    @Enumerated(EnumType.STRING)
+    private Status status = Status.ACTIVE;
+
+    @Column
+    private Integer trustScore;
+
+    @Column
+    private Integer reportCount;
+
     @Builder
     public User(String email, String contact, String username, String password, Role role,
                 String name, String nickname, String birthday, String gender,
-                String zipCode, String address, String detailAddress) {
+                String zipCode, String address, String detailAddress, Status status, Integer trustScore, Integer reportCount) {
         this.email = email;
         this.contact = contact;
         this.username = username;
@@ -87,6 +97,9 @@ public class User {
         this.zipCode = zipCode;
         this.address = address;
         this.detailAddress = detailAddress;
+        this.status =  status;
+        this.trustScore = trustScore;
+        this.reportCount = reportCount;
     }
 
     @PrePersist

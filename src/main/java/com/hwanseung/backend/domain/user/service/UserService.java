@@ -1,6 +1,7 @@
 package com.hwanseung.backend.domain.user.service;
 
-import jakarta.transaction.Transactional;
+// 삭제: import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional; // 이걸로 교체
 import com.hwanseung.backend.domain.user.entity.User;
 import com.hwanseung.backend.domain.user.dto.UserRequestDTO;
 import com.hwanseung.backend.domain.user.dto.UserResponseDTO;
@@ -46,6 +47,12 @@ public class UserService {
         User user = this.userRepository.findById(id).orElseThrow(
                 () -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다. user_id = " + id));
         this.userRepository.delete(user);
+    }
+
+    /* User테이블 총 사용자 수 */
+    @Transactional(readOnly = true)
+    public long getTotalUserCount() {
+        return userRepository.count();
     }
 
     public boolean isUseridDuplicate(String username) {

@@ -22,6 +22,8 @@ public class UserResponseDTO {
     private String role;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "Asia/Seoul")
     private LocalDateTime createdAt;
+    private String profileImagePath;
+    private String profileOriginalName;
 
     public UserResponseDTO(User entity) {
         this.id = entity.getId();
@@ -37,5 +39,7 @@ public class UserResponseDTO {
         this.detailAddress = entity.getDetailAddress();
         this.role = entity.getRole() != null ? entity.getRole().name() : null;
         this.createdAt = entity.getCreatedAt();
+        this.profileImagePath = entity.getProfileImagePath();
+        this.profileOriginalName = entity.getProfileOriginalName();
     }
 }

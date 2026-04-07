@@ -37,8 +37,6 @@ public class WebConfig implements WebMvcConfigurer {
                         "http://127.0.0.1:3000",
                         "http://localhost:5173",
                         "http://127.0.0.1:5173"
-//                        "http://54.116.66.225",
-//                        "http://hsmk.kro.kr"
                 )
                 .allowCredentials(true) // 중요!
                 .allowedMethods("*");

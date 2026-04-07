@@ -267,10 +267,14 @@ public class ProductService {
                 .map(product -> {
                     long likeCount = productLikeRepository.countByProduct(product);
                     boolean liked = false;
+                    long chatCount = chatRoomRepository.countByItemIdAndRoomType(
+                            product.getProductId().longValue(),
+                            RoomType.TRADE
+                    );
                     if (seller != null) {
                         liked = productLikeRepository.existsByProductAndUser(product, seller);
                     }
-                    return ProductListResponseDTO.from(product, likeCount, liked);
+                    return ProductListResponseDTO.from(product, likeCount, chatCount, liked);
                 })
                 .toList();
     }
@@ -286,8 +290,12 @@ public class ProductService {
                 .map(like -> {
                     Product product = like.getProduct();
                     long likeCount = productLikeRepository.countByProduct(product);
+                    long chatCount = chatRoomRepository.countByItemIdAndRoomType(
+                            product.getProductId().longValue(),
+                            RoomType.TRADE
+                    );
                     // 찜 목록이므로 'liked' 값은 무조건 true입니다.
-                    return ProductListResponseDTO.from(product, likeCount, true);
+                    return ProductListResponseDTO.from(product, likeCount, chatCount, true);
                 })
                 .toList();
     }

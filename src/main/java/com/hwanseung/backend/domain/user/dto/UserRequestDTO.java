@@ -26,7 +26,8 @@ public class UserRequestDTO {
     private Role role; //역할
     private String neighborhood; // 동네 이름 (예: 안양동)
     private boolean isNeighborhoodAuthenticated; // 인증 여부 (true/false)
-
+    private String profileImagePath;
+    private String profileOriginalName;
 
     /**
      * DTO를 엔티티로 변환하는 메서드
@@ -46,6 +47,8 @@ public class UserRequestDTO {
                 .address(hasText(this.address))
                 .detailAddress(hasText(this.detailAddress))
                 .role(this.role)
+                .profileImagePath(hasText(this.profileImagePath))
+                .profileOriginalName(hasText(this.profileOriginalName))
                 .build();
     }
 

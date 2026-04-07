@@ -6,6 +6,7 @@ import com.hwanseung.backend.domain.product.dto.ProductListResponseDTO;
 import com.hwanseung.backend.domain.product.dto.ProductUpdateRequestDTO;
 import com.hwanseung.backend.domain.product.entity.Product;
 import com.hwanseung.backend.domain.product.entity.ProductImage;
+import com.hwanseung.backend.domain.product.entity.ProductLike;
 import com.hwanseung.backend.domain.product.repository.ProductLikeRepository;
 import com.hwanseung.backend.domain.product.repository.ProductRepository;
 import com.hwanseung.backend.domain.user.config.CustomUserDetails;
@@ -232,4 +233,46 @@ public class ProductService {
     public long getActiveProductCount() {
         return productRepository.countByDeletedAtIsNull();
     }
-}
+
+
+    // 🌟 [추가] 내 판매 내역 조회 로직
+    @Transactional(readOnly = true)
+    public List<ProductListResponseDTO> getMySalesList(String sellerId) {
+
+        List<Product> myProducts = productRepository.findBySellerIdOrderByCreatedAtDesc(sellerId);
+        //내림차순으로 가져오기(최신부터) -> findBySellerId-> 판매자 id 컬럼을 -> 그래서 myProducts라는 Product자료형의 List배열에 담기
+
+        // 2. 좋아요(찜) 갯수 계산용으로 내 정보 가져오기
+        User seller = userRepository.findByUsername(sellerId).orElse(null);
+
+        // 3. 가져온 원본(Entity)을 택배 상자(DTO)로 포장해서 반환
+        return myProducts.stream()
+                .map(product -> {
+                    long likeCount = productLikeRepository.countByProduct(product);
+                    boolean liked = false;
+                    if (seller != null) {
+                        liked = productLikeRepository.existsByProductAndUser(product, seller);
+                    }
+                    return ProductListResponseDTO.from(product, likeCount, liked);
+                })
+                .toList();
+    }
+
+    //내 관심목록 조회
+    @Transactional(readOnly = true)
+    public List<ProductListResponseDTO> getWishlist(String username) {
+
+        List<ProductLike> myLikes = productLikeRepository.findByUser_Username(username);
+
+        // 2. 찜 기록 안에 들어있는 '상품(Product)'들만 쏙 빼서 택배 상자(DTO)로 변환합니다.
+        return myLikes.stream()
+                .map(like -> {
+                    Product product = like.getProduct();
+                    long likeCount = productLikeRepository.countByProduct(product);
+                    // 찜 목록이므로 'liked' 값은 무조건 true입니다.
+                    return ProductListResponseDTO.from(product, likeCount, true);
+                })
+                .toList();
+    }
+    }
+

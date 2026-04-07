@@ -1,5 +1,7 @@
 package com.hwanseung.backend.domain.product.service;
 
+import com.hwanseung.backend.domain.chat.entity.RoomType;
+import com.hwanseung.backend.domain.chat.repository.ChatRoomRepository;
 import com.hwanseung.backend.domain.product.dto.ProductCreateRequestDTO;
 import com.hwanseung.backend.domain.product.dto.ProductDetailResponseDTO;
 import com.hwanseung.backend.domain.product.dto.ProductListResponseDTO;
@@ -30,6 +32,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ProductLikeRepository productLikeRepository;
     private final UserRepository userRepository;
+    private final ChatRoomRepository chatRoomRepository;
 
     // 실제 파일 저장 폴더
     private static final String UPLOAD_DIR = "C:/bImg/product/";
@@ -95,13 +98,18 @@ public class ProductService {
         return products.stream()
                 .map(product -> {
                     long likeCount = productLikeRepository.countByProduct(product);
+                    long chatCount = chatRoomRepository.countByItemIdAndRoomType(
+                            product.getProductId().longValue(),
+                            RoomType.TRADE
+                    );
+
 
                     boolean liked = false;
                     if (finalLoginUser != null) {
                         liked = productLikeRepository.existsByProductAndUser(product, finalLoginUser);
                     }
 
-                    return ProductListResponseDTO.from(product, likeCount, liked);
+                    return ProductListResponseDTO.from(product, likeCount, chatCount, liked);
                 })
                 .toList();
     }
@@ -115,7 +123,16 @@ public class ProductService {
 
         // 2. Entity를 DTO로 변환해서 반환 (찜 여부는 이 상황에선 간단히 false/0으로 처리하거나, 필요시 위 로직처럼 추가)
         return nearbyProducts.stream()
-                .map(product -> ProductListResponseDTO.from(product, 0L, false))
+                .map(product -> {
+                    long likeCount = productLikeRepository.countByProduct(product);
+                    long chatCount = chatRoomRepository.countByItemIdAndRoomType(
+                            product.getProductId().longValue(),
+                            RoomType.TRADE
+                    );
+
+                    boolean liked = false; // 일단 주변매물은 로그인 사용자 기준 안 붙일 거면 false
+                    return ProductListResponseDTO.from(product, likeCount, chatCount, liked);
+                })
                 .toList();
     }
 
@@ -201,7 +218,7 @@ public class ProductService {
         return ProductDetailResponseDTO.from(product);
     }
 
-    // ✅ [추가] 판매완료 처리
+    // 판매완료 처리
     public void markProductAsSoldOut(Integer productId, Authentication authentication) {
         CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
         String loginUserId = loginUser.getUsername();

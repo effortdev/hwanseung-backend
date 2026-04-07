@@ -116,4 +116,10 @@ public class Product {
         productImage.setProduct(this);
     }
 
+    // 기존 이미지 제거
+    public void removeProductImage(ProductImage productImage) {
+        this.productImages.remove(productImage);
+        productImage.setProduct(null);
+    }
+
 }

@@ -82,13 +82,13 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
-    // 상품 수정
-    @PutMapping("/{productId}")
+    // 상품 수정 multipart/form-data 로 받기
+    @PutMapping(value = "/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateProduct(
             @PathVariable Integer productId,
-            @RequestBody ProductUpdateRequestDTO requestDTO,
+            @ModelAttribute ProductUpdateRequestDTO requestDTO,
             Authentication authentication
-    ) {
+    ) throws IOException {
         productService.updateProduct(productId, requestDTO, authentication);
 
         return ResponseEntity.ok(Map.of(

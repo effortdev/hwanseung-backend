@@ -137,10 +137,8 @@ public class ProductService {
                 .toList();
     }
 
-
-    // 상품 수정
-    public void updateProduct(Integer productId, ProductUpdateRequestDTO requestDTO, Authentication authentication) {
-
+    // 상품 수정 이미지 수정 포함
+    public void updateProduct(Integer productId, ProductUpdateRequestDTO requestDTO, Authentication authentication) throws IOException {
         CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
         String loginUserId = loginUser.getUsername();
 
@@ -162,6 +160,43 @@ public class ProductService {
                 requestDTO.getContent(),
                 requestDTO.getLocation()
         );
+
+        // 1) 기존 이미지 삭제
+        List<Integer> deleteImageIds = requestDTO.getDeleteImageIds();
+        if (deleteImageIds != null && !deleteImageIds.isEmpty()) {
+            List<ProductImage> removeTargets = product.getProductImages().stream()
+                    .filter(image -> deleteImageIds.contains(image.getProductImageId()))
+                    .toList();
+
+            for (ProductImage image : removeTargets) {
+                deleteStoredFile(image.getStoredName());
+                product.removeProductImage(image);
+            }
+        }
+
+        // 2) 새 이미지 추가
+        List<MultipartFile> newImages = requestDTO.getNewImages();
+        long validNewImageCount = 0;
+
+        if (newImages != null) {
+            validNewImageCount = newImages.stream()
+                    .filter(image -> image != null && !image.isEmpty())
+                    .count();
+        }
+
+        long finalImageCount = product.getProductImages().size() + validNewImageCount;
+        if (finalImageCount > MAX_IMAGE_COUNT) {
+            throw new IllegalArgumentException("상품 이미지는 최대 5장까지 업로드할 수 있습니다.");
+        }
+
+        if (newImages != null) {
+            for (MultipartFile image : newImages) {
+                if (image != null && !image.isEmpty()) {
+                    ProductImage productImage = saveProductImage(image);
+                    product.addProductImage(productImage);
+                }
+            }
+        }
     }
 
     // 상품 삭제 (soft delete)
@@ -182,6 +217,16 @@ public class ProductService {
         }
 
         product.deleteProduct();
+    }
+
+    //  실제 파일 삭제
+    private void deleteStoredFile(String storedName) {
+        if (storedName == null || storedName.isBlank()) return;
+
+        File file = new File(UPLOAD_DIR, storedName);
+        if (file.exists()) {
+            file.delete();
+        }
     }
 
     // 파일 저장 + ProductImage 엔티티 생성

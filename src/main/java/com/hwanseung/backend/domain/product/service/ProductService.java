@@ -314,7 +314,8 @@ public class ProductService {
                     boolean liked = false;
                     long chatCount = chatRoomRepository.countByItemIdAndRoomType(
                             product.getProductId().longValue(),
-                            RoomType.TRADE);
+                            RoomType.TRADE
+                    );
                     if (seller != null) {
                         liked = productLikeRepository.existsByProductAndUser(product, seller);
                     }
@@ -336,9 +337,10 @@ public class ProductService {
                     long likeCount = productLikeRepository.countByProduct(product);
                     long chatCount = chatRoomRepository.countByItemIdAndRoomType(
                             product.getProductId().longValue(),
-                            RoomType.TRADE);
+                            RoomType.TRADE
+                    );
                     // 찜 목록이므로 'liked' 값은 무조건 true입니다.
-                    return ProductListResponseDTO.from(product, likeCount, chatCount,  true);
+                    return ProductListResponseDTO.from(product, likeCount, chatCount, true);
                 })
                 .toList();
     }

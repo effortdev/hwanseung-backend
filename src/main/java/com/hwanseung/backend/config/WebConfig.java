@@ -21,9 +21,9 @@ public class WebConfig implements WebMvcConfigurer {
         }
 
         registry.addResourceHandler("/api/imgs/**") // 웹에서 접근할 경로
-                .addResourceLocations(filePath); // 실제 파일이 있는 위치
+                .addResourceLocations("file:///" +filePath); // 실제 파일이 있는 위치
         registry.addResourceHandler("/api/download/**")
-                .addResourceLocations(filePath);
+                .addResourceLocations("file:///" +filePath);
     }
 
 
@@ -31,12 +31,12 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
                 .allowedOrigins(
+                        "http://localhost",
+                        "http://127.0.0.1",
                         "http://localhost:3000",
                         "http://127.0.0.1:3000",
                         "http://localhost:5173",
-                        "http://127.0.0.1:5173",
-                        "http://54.116.66.225",
-                        "http://hsmk.kro.kr"
+                        "http://127.0.0.1:5173"
                 )
                 .allowCredentials(true) // 중요!
                 .allowedMethods("*");

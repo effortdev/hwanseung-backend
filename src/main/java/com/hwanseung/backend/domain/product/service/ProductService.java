@@ -301,8 +301,8 @@ public class ProductService {
     @Transactional(readOnly = true)
     public List<ProductListResponseDTO> getMySalesList(String sellerId) {
 
-        List<Product> myProducts = productRepository.findBySellerIdOrderByCreatedAtDesc(sellerId);
-        //내림차순으로 가져오기(최신부터) -> findBySellerId-> 판매자 id 컬럼을 -> 그래서 myProducts라는 Product자료형의 List배열에 담기
+        // 🚨 이 부분 수정! 방금 만든 새로운 레포지토리 메서드를 호출합니다.
+        List<Product> myProducts = productRepository.findBySellerIdAndDeletedAtIsNullOrderByCreatedAtDesc(sellerId);
 
         // 2. 좋아요(찜) 갯수 계산용으로 내 정보 가져오기
         User seller = userRepository.findByUsername(sellerId).orElse(null);

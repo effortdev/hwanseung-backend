@@ -1,6 +1,7 @@
 package com.hwanseung.backend.domain.product.repository;
 
 import com.hwanseung.backend.domain.product.entity.Product;
+import com.hwanseung.backend.domain.product.entity.ProductLike;
 import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -12,6 +13,10 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     // 삭제되지 않은 상품만 최신순 조회
     List<Product> findByDeletedAtIsNullOrderByCreatedAtDesc();
+
+    // ProductRepository.java 안에 추가
+    List<Product> findBySellerIdOrderByCreatedAtDesc(String sellerId);
+    //sellerId가져오기(product테이블)
 
     // 1. 전체 상품 개수 (기본 제공)
     long count();

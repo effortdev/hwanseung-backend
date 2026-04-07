@@ -8,7 +8,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,11 +33,18 @@ public class UserRestController {
     /** 회원정보 수정 API */
     @PutMapping("/api/user")
     public ResponseEntity<?> updateUser(@RequestHeader("Authorization") String accessToken,
-                                        @RequestBody UserRequestDTO requestDto) {
+                                        @RequestPart("userData") UserRequestDTO requestDto,
+                                        @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
+
+        try {
         // 🌟 토큰에서 Long id를 꺼냅니다!
         Long id = this.jwtTokenProvider.getUserIdFromToken(accessToken.substring(7));
-        this.userService.update(id, requestDto);
+        this.userService.update(id, requestDto, profileImage);
         return ResponseEntity.status(HttpStatus.OK).body(null);
+        } catch (IOException e) {
+            return ResponseEntity.status(500).body("이미지 업로드 실패");
+        }
+
     }
 
     /** 회원정보 삭제 API */

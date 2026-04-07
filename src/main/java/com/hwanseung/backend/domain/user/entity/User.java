@@ -80,6 +80,12 @@ public class User {
     @Column(name = "is_neighborhood_authenticated", nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
     private boolean isNeighborhoodAuthenticated = false;
 
+    @Column(name = "profile_image_path")
+    private String profileImagePath;
+
+    @Column(name = "profile_original_name")
+    private String profileOriginalName;
+
     @Builder
     public User(String email, String contact, String username, String password, Role role,
                 String name, String nickname, String birthday, String gender,

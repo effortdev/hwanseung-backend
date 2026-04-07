@@ -5,6 +5,7 @@ import com.hwanseung.backend.domain.product.entity.ProductLike;
 import com.hwanseung.backend.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ProductLikeRepository extends JpaRepository<ProductLike, Integer> {
@@ -20,4 +21,6 @@ public interface ProductLikeRepository extends JpaRepository<ProductLike, Intege
 
     // 찜 취소
     void deleteByProductAndUser(Product product, User user);
+
+    List<ProductLike> findByUser_Username(String username);
 }

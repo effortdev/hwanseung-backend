@@ -22,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -112,6 +113,41 @@ public class ProductService {
 
                     return ProductListResponseDTO.from(product, likeCount, chatCount, liked);
                 })
+                .toList();
+    }
+
+    // 메인페이지 인기 매물 조회
+    @Transactional(readOnly = true)
+    public List<ProductListResponseDTO> getPopularProducts(String loginUserId) {
+        List<Product> products = productRepository.findAllVisibleSaleProductsOrderByCreatedAtDesc();
+
+        User loginUser = null;
+        if (loginUserId != null && !loginUserId.isBlank()) {
+            loginUser = userRepository.findByUsername(loginUserId).orElse(null);
+        }
+
+        User finalLoginUser = loginUser;
+
+        return products.stream()
+                .map(product -> {
+                    long likeCount = productLikeRepository.countByProduct(product);
+                    long chatCount = chatRoomRepository.countByItemIdAndRoomType(
+                            product.getProductId().longValue(),
+                            RoomType.TRADE
+                    );
+
+                    boolean liked = false;
+                    if (finalLoginUser != null) {
+                        liked = productLikeRepository.existsByProductAndUser(product, finalLoginUser);
+                    }
+
+                    return ProductListResponseDTO.from(product, likeCount, chatCount, liked);
+                })
+                .sorted(
+                        Comparator.comparingLong(ProductListResponseDTO::getLikeCount).reversed()
+                                .thenComparing(ProductListResponseDTO::getProductId, Comparator.reverseOrder())
+                )
+                .limit(8)
                 .toList();
     }
 

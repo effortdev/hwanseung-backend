@@ -1,13 +1,19 @@
 package com.hwanseung.backend.domain.product.service;
 
+import com.hwanseung.backend.domain.chat.entity.RoomType;
+import com.hwanseung.backend.domain.chat.repository.ChatRoomRepository;
 import com.hwanseung.backend.domain.product.dto.ProductCreateRequestDTO;
 import com.hwanseung.backend.domain.product.dto.ProductDetailResponseDTO;
 import com.hwanseung.backend.domain.product.dto.ProductListResponseDTO;
 import com.hwanseung.backend.domain.product.dto.ProductUpdateRequestDTO;
 import com.hwanseung.backend.domain.product.entity.Product;
 import com.hwanseung.backend.domain.product.entity.ProductImage;
+import com.hwanseung.backend.domain.product.entity.ProductLike;
+import com.hwanseung.backend.domain.product.repository.ProductLikeRepository;
 import com.hwanseung.backend.domain.product.repository.ProductRepository;
 import com.hwanseung.backend.domain.user.config.CustomUserDetails;
+import com.hwanseung.backend.domain.user.entity.User;
+import com.hwanseung.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -25,6 +31,9 @@ import java.util.UUID;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final ProductLikeRepository productLikeRepository;
+    private final UserRepository userRepository;
+    private final ChatRoomRepository chatRoomRepository;
 
     // 실제 파일 저장 폴더
     private static final String UPLOAD_DIR = "C:/bImg/product/";
@@ -77,17 +86,59 @@ public class ProductService {
 
     // 상품 목록 조회
     @Transactional(readOnly = true)
-    public List<ProductListResponseDTO> getProductList() {
+    public List<ProductListResponseDTO> getProductList(String loginUserId) {
         List<Product> products = productRepository.findAllVisibleOrderBySaleStatusAndCreatedAtDesc();
 
+        User loginUser = null;
+        if (loginUserId != null && !loginUserId.isBlank()) {
+            loginUser = userRepository.findByUsername(loginUserId).orElse(null);
+        }
+
+        User finalLoginUser = loginUser;
+
         return products.stream()
-                .map(ProductListResponseDTO::from)
+                .map(product -> {
+                    long likeCount = productLikeRepository.countByProduct(product);
+                    long chatCount = chatRoomRepository.countByItemIdAndRoomType(
+                            product.getProductId().longValue(),
+                            RoomType.TRADE
+                    );
+
+
+                    boolean liked = false;
+                    if (finalLoginUser != null) {
+                        liked = productLikeRepository.existsByProductAndUser(product, finalLoginUser);
+                    }
+
+                    return ProductListResponseDTO.from(product, likeCount, chatCount, liked);
+                })
                 .toList();
     }
 
-    // 상품 수정
-    public void updateProduct(Integer productId, ProductUpdateRequestDTO requestDTO, Authentication authentication) {
+    //주변 매물
+    @Transactional(readOnly = true)
+    public List<ProductListResponseDTO> getNearbyProducts(double lat, double lng, double radius) {
 
+        // 1. 방금 만든 레포지토리 쿼리로 반경 내 상품 찾기
+        List<Product> nearbyProducts = productRepository.findNearbyProducts(lat, lng, radius);
+
+        // 2. Entity를 DTO로 변환해서 반환 (찜 여부는 이 상황에선 간단히 false/0으로 처리하거나, 필요시 위 로직처럼 추가)
+        return nearbyProducts.stream()
+                .map(product -> {
+                    long likeCount = productLikeRepository.countByProduct(product);
+                    long chatCount = chatRoomRepository.countByItemIdAndRoomType(
+                            product.getProductId().longValue(),
+                            RoomType.TRADE
+                    );
+
+                    boolean liked = false; // 일단 주변매물은 로그인 사용자 기준 안 붙일 거면 false
+                    return ProductListResponseDTO.from(product, likeCount, chatCount, liked);
+                })
+                .toList();
+    }
+
+    // 상품 수정 이미지 수정 포함
+    public void updateProduct(Integer productId, ProductUpdateRequestDTO requestDTO, Authentication authentication) throws IOException {
         CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
         String loginUserId = loginUser.getUsername();
 
@@ -109,6 +160,43 @@ public class ProductService {
                 requestDTO.getContent(),
                 requestDTO.getLocation()
         );
+
+        // 1) 기존 이미지 삭제
+        List<Integer> deleteImageIds = requestDTO.getDeleteImageIds();
+        if (deleteImageIds != null && !deleteImageIds.isEmpty()) {
+            List<ProductImage> removeTargets = product.getProductImages().stream()
+                    .filter(image -> deleteImageIds.contains(image.getProductImageId()))
+                    .toList();
+
+            for (ProductImage image : removeTargets) {
+                deleteStoredFile(image.getStoredName());
+                product.removeProductImage(image);
+            }
+        }
+
+        // 2) 새 이미지 추가
+        List<MultipartFile> newImages = requestDTO.getNewImages();
+        long validNewImageCount = 0;
+
+        if (newImages != null) {
+            validNewImageCount = newImages.stream()
+                    .filter(image -> image != null && !image.isEmpty())
+                    .count();
+        }
+
+        long finalImageCount = product.getProductImages().size() + validNewImageCount;
+        if (finalImageCount > MAX_IMAGE_COUNT) {
+            throw new IllegalArgumentException("상품 이미지는 최대 5장까지 업로드할 수 있습니다.");
+        }
+
+        if (newImages != null) {
+            for (MultipartFile image : newImages) {
+                if (image != null && !image.isEmpty()) {
+                    ProductImage productImage = saveProductImage(image);
+                    product.addProductImage(productImage);
+                }
+            }
+        }
     }
 
     // 상품 삭제 (soft delete)
@@ -129,6 +217,16 @@ public class ProductService {
         }
 
         product.deleteProduct();
+    }
+
+    //  실제 파일 삭제
+    private void deleteStoredFile(String storedName) {
+        if (storedName == null || storedName.isBlank()) return;
+
+        File file = new File(UPLOAD_DIR, storedName);
+        if (file.exists()) {
+            file.delete();
+        }
     }
 
     // 파일 저장 + ProductImage 엔티티 생성
@@ -166,7 +264,7 @@ public class ProductService {
         return ProductDetailResponseDTO.from(product);
     }
 
-    // ✅ [추가] 판매완료 처리
+    // 판매완료 처리
     public void markProductAsSoldOut(Integer productId, Authentication authentication) {
         CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
         String loginUserId = loginUser.getUsername();
@@ -197,4 +295,54 @@ public class ProductService {
     public long getActiveProductCount() {
         return productRepository.countByDeletedAtIsNull();
     }
-}
+
+
+    // 🌟 [추가] 내 판매 내역 조회 로직
+    @Transactional(readOnly = true)
+    public List<ProductListResponseDTO> getMySalesList(String sellerId) {
+
+        // 🚨 이 부분 수정! 방금 만든 새로운 레포지토리 메서드를 호출합니다.
+        List<Product> myProducts = productRepository.findBySellerIdAndDeletedAtIsNullOrderByCreatedAtDesc(sellerId);
+
+        // 2. 좋아요(찜) 갯수 계산용으로 내 정보 가져오기
+        User seller = userRepository.findByUsername(sellerId).orElse(null);
+
+        // 3. 가져온 원본(Entity)을 택배 상자(DTO)로 포장해서 반환
+        return myProducts.stream()
+                .map(product -> {
+                    long likeCount = productLikeRepository.countByProduct(product);
+                    boolean liked = false;
+                    long chatCount = chatRoomRepository.countByItemIdAndRoomType(
+                            product.getProductId().longValue(),
+                            RoomType.TRADE
+                    );
+                    if (seller != null) {
+                        liked = productLikeRepository.existsByProductAndUser(product, seller);
+                    }
+                    return ProductListResponseDTO.from(product, likeCount, chatCount, liked);
+                })
+                .toList();
+    }
+
+    //내 관심목록 조회
+    @Transactional(readOnly = true)
+    public List<ProductListResponseDTO> getWishlist(String username) {
+
+        List<ProductLike> myLikes = productLikeRepository.findByUser_Username(username);
+
+        // 2. 찜 기록 안에 들어있는 '상품(Product)'들만 쏙 빼서 택배 상자(DTO)로 변환합니다.
+        return myLikes.stream()
+                .map(like -> {
+                    Product product = like.getProduct();
+                    long likeCount = productLikeRepository.countByProduct(product);
+                    long chatCount = chatRoomRepository.countByItemIdAndRoomType(
+                            product.getProductId().longValue(),
+                            RoomType.TRADE
+                    );
+                    // 찜 목록이므로 'liked' 값은 무조건 true입니다.
+                    return ProductListResponseDTO.from(product, likeCount, chatCount, true);
+                })
+                .toList();
+    }
+    }
+

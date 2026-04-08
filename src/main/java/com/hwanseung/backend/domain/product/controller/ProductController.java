@@ -6,6 +6,7 @@ import com.hwanseung.backend.domain.product.dto.ProductListResponseDTO;
 import com.hwanseung.backend.domain.product.dto.ProductUpdateRequestDTO;
 import com.hwanseung.backend.domain.product.entity.Product;
 import com.hwanseung.backend.domain.product.service.ProductService;
+import com.hwanseung.backend.domain.user.config.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -39,10 +40,21 @@ public class ProductController {
         ));
     }
 
+    //내 찜목록
+    // ProductController.java 에 추가
+    @GetMapping("/wishlist")
+    public ResponseEntity<List<ProductListResponseDTO>> getWishlist(Authentication authentication) {
+        CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
+        List<ProductListResponseDTO> wishlist = productService.getWishlist(loginUser.getUsername());
+        return ResponseEntity.ok(wishlist);
+    }
+
     // 상품 목록 조회
     @GetMapping
-    public ResponseEntity<List<ProductListResponseDTO>> getProductList() {
-        List<ProductListResponseDTO> productList = productService.getProductList();
+    public ResponseEntity<List<ProductListResponseDTO>> getProductList(Authentication authentication) {
+        String loginUserId = authentication != null ? authentication.getName() : null;
+
+        List<ProductListResponseDTO> productList = productService.getProductList(loginUserId);
         return ResponseEntity.ok(productList);
     }
 
@@ -70,13 +82,13 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
-    // 상품 수정
-    @PutMapping("/{productId}")
+    // 상품 수정 multipart/form-data 로 받기
+    @PutMapping(value = "/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateProduct(
             @PathVariable Integer productId,
-            @RequestBody ProductUpdateRequestDTO requestDTO,
+            @ModelAttribute ProductUpdateRequestDTO requestDTO,
             Authentication authentication
-    ) {
+    ) throws IOException {
         productService.updateProduct(productId, requestDTO, authentication);
 
         return ResponseEntity.ok(Map.of(
@@ -112,4 +124,18 @@ public class ProductController {
                 "productId", productId
         ));
     }
+
+    // 🌟 [추가] 내 판매 내역 API
+    @GetMapping("/my-sales")
+    public ResponseEntity<List<ProductListResponseDTO>> getMySalesList(Authentication authentication) {
+
+        String loginUserId = authentication.getName();
+
+        List<ProductListResponseDTO> mySalesList = productService.getMySalesList(loginUserId);
+
+        return ResponseEntity.ok(mySalesList);
+    }
+
+
+
 }

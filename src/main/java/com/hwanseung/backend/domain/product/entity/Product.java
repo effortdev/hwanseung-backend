@@ -37,6 +37,14 @@ public class Product {
     @Column(name = "price", nullable = false)
     private int price; // 가격
 
+    // 🌟 새로 추가하는 위도/경도 컬럼
+    @Column(name = "lat")
+    private Double lat;
+
+    @Column(name = "lng")
+    private Double lng;
+
+
     @Lob
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content; // 상품 설명 (TEXT로 저장)
@@ -78,6 +86,8 @@ public class Product {
         this.price = price;
         this.content = content;
         this.location = location;
+        this.lat = lat;
+        this.lng = lng;
     }
 
     // 소프트 삭제
@@ -104,6 +114,12 @@ public class Product {
     public void addProductImage(ProductImage productImage) {
         this.productImages.add(productImage);
         productImage.setProduct(this);
+    }
+
+    // 기존 이미지 제거
+    public void removeProductImage(ProductImage productImage) {
+        this.productImages.remove(productImage);
+        productImage.setProduct(null);
     }
 
 }

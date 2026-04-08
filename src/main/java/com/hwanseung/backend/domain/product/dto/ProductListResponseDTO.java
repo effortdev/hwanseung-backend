@@ -18,8 +18,11 @@ public class ProductListResponseDTO {
     private String sellerNickname;
     private String saleStatus;
     private String thumbnailUrl;
+    private long likeCount;
+    private long chatCount;
+    private boolean liked;
 
-    public static ProductListResponseDTO from(Product product) {
+    public static ProductListResponseDTO from(Product product, long likeCount, long chatCount, boolean liked) {
         String thumbnailUrl = null;
 
         if (product.getProductImages() != null && !product.getProductImages().isEmpty()) {
@@ -37,6 +40,9 @@ public class ProductListResponseDTO {
                 .sellerNickname(product.getSellerNickname())
                 .saleStatus(product.getSaleStatus())
                 .thumbnailUrl(thumbnailUrl)
+                .likeCount(likeCount)
+                .chatCount(chatCount)
+                .liked(liked)
                 .build();
     }
 }

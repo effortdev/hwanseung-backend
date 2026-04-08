@@ -81,10 +81,24 @@ public class User {
     @Column
     private Integer reportCount;
 
+    @Column(name = "neighborhood", length = 50)
+    private String neighborhood;
+
+    // MySQL의 TINYINT(1)은 Java의 boolean과 완벽하게 1:1로 매칭됩니다.
+    // columnDefinition = "tinyint(1) default 0" 옵션을 주면 DB와 동기화하기 좋습니다.
+    @Column(name = "is_neighborhood_authenticated", nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
+    private boolean isNeighborhoodAuthenticated = false;
+
+    @Column(name = "profile_image_path")
+    private String profileImagePath;
+
+    @Column(name = "profile_original_name")
+    private String profileOriginalName;
+
     @Builder
     public User(String email, String contact, String username, String password, Role role,
                 String name, String nickname, String birthday, String gender,
-                String zipCode, String address, String detailAddress, Status status, Integer trustScore, Integer reportCount) {
+                String zipCode, String address, String detailAddress) {
         this.email = email;
         this.contact = contact;
         this.username = username;

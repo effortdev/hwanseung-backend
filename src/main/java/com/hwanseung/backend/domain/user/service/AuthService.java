@@ -11,6 +11,10 @@ import com.hwanseung.backend.domain.user.dto.AuthResponseDTO;
 import com.hwanseung.backend.domain.user.dto.UserRequestDTO;
 import com.hwanseung.backend.domain.user.repository.AuthRepository;
 import com.hwanseung.backend.domain.user.repository.UserRepository;
+
+import com.hwanseung.backend.domain.user.dto.PayBalance;
+import com.hwanseung.backend.domain.user.controller.PayBalanceRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -22,9 +26,34 @@ import org.springframework.stereotype.Service;
 public class AuthService {
     private final UserRepository userRepository;
     private final AuthRepository authRepository;
+    private final VerificationService verificationService;
+    private final MailService mailService;
+    private final SmsService smsService;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
+    /** 이메일 인증 요청 로직 */
+    public void requestEmailVerification(String email) {
+        if (userRepository.existsByEmail(email)) {
+            throw new IllegalStateException("이미 가입된 이메일입니다.");
+        }
+        String code = verificationService.createCode(email);
+        mailService.sendEmail(email, code);
+    }
+
+    /** SMS 인증 요청 로직 */
+    public void requestSmsVerification(String phoneNumber) {
+        // 전화번호 중복 체크가 필요하다면 여기에 추가
+        String code = verificationService.createCode(phoneNumber);
+        smsService.sendSms(phoneNumber, code);
+    }
+
+    /** 공통 인증 확인 로직 */
+    public boolean checkVerification(String key, String code) {
+        return verificationService.verify(key, code);
+    }
+
+    private final PayBalanceRepository payBalanceRepository;
     /** 로그인 */
     @Transactional
     public AuthResponseDTO login(AuthRequestDTO requestDto) {
@@ -41,7 +70,7 @@ public class AuthService {
 
         // GENERATE ACCESS_TOKEN AND REFRESH_TOKEN
         String accessToken = this.jwtTokenProvider.generateAccessToken(
-                                        new UsernamePasswordAuthenticationToken(new CustomUserDetails(user), user.getPassword()));
+                new UsernamePasswordAuthenticationToken(new CustomUserDetails(user), user.getPassword()));
         String refreshToken = this.jwtTokenProvider.generateRefreshToken(
                 new UsernamePasswordAuthenticationToken(new CustomUserDetails(user), user.getPassword()));
 
@@ -68,7 +97,13 @@ public class AuthService {
         // SAVE USER ENTITY
         requestDto.setRole(Role.ROLE_USER);
         requestDto.setPassword(passwordEncoder.encode(requestDto.getPassword()));//암호화가 이루어지는 곳
-        this.userRepository.save(requestDto.toEntity());
+        User savedUser = this.userRepository.save(requestDto.toEntity());
+        PayBalance newBalance = new PayBalance();
+        newBalance.setUserId(String.valueOf(savedUser.getId()));
+        newBalance.setHwanseungPay(0);
+
+        // 🌟 5. 지갑 테이블에 저장!
+        this.payBalanceRepository.save(newBalance);
     }
 
     /** Token 갱신 */

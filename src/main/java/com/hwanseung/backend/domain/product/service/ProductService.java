@@ -37,7 +37,8 @@ public class ProductService {
     private final ChatRoomRepository chatRoomRepository;
 
     // 실제 파일 저장 폴더
-    private static final String UPLOAD_DIR = "C:/bImg/product/";
+//    private static final String UPLOAD_DIR = "C:/bImg/product/";
+    private static final String UPLOAD_DIR = "/app/uploads/product/";
     // 이미지 최대 5장
     private static final int MAX_IMAGE_COUNT = 5;
 

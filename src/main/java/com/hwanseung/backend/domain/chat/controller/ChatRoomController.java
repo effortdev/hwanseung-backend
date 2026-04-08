@@ -129,7 +129,10 @@ public class ChatRoomController {
     public ResponseEntity<String> uploadChatImage(@RequestParam("file") MultipartFile file) throws IOException {
 
         // 1. 채팅 이미지를 모아둘 별도 폴더 지정 (상품 이미지와 섞이지 않도록 chat 폴더 사용)
-        String uploadDir = "C:/bImg/chat/";
+//        String uploadDir = "C:/bImg/chat/";
+        // 🛠️ 수정: 윈도우 경로를 리눅스 경로로 변경
+        String uploadDir = "/app/uploads/chat/";
+
         File dir = new File(uploadDir);
         if (!dir.exists()) {
             dir.mkdirs();

@@ -1,7 +1,9 @@
 package com.hwanseung.backend.domain.user.repository;
 
-import com.hwanseung.backend.domain.user.dto.UserRequestDTO;
 import com.hwanseung.backend.domain.user.entity.User;
+import com.hwanseung.backend.domain.user.dto.UserRequestDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -20,6 +22,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
     long count();
+
+    // 검색어(이메일 또는 닉네임)를 포함한 페이징 조회
+    Page<User> findByEmailContainingOrNicknameContaining(String email, String nickname, Pageable pageable);
 
     @Modifying
     @Query("UPDATE User u SET u.nickname = :#{#dto.nickname}, u.email = :#{#dto.email}, " +

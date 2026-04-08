@@ -66,6 +66,14 @@ public class ProductController {
         return ResponseEntity.ok(productDetail);
     }
 
+    // 메인페이지 인기 매물 조회
+    @GetMapping("/popular")
+    public ResponseEntity<List<ProductListResponseDTO>> getPopularProducts(Authentication authentication) {
+        String loginUserId = authentication != null ? authentication.getName() : null;
+        List<ProductListResponseDTO> popularProducts = productService.getPopularProducts(loginUserId);
+        return ResponseEntity.ok(popularProducts);
+    }
+
     @GetMapping("/count")
     public ResponseEntity<Map<String, Long>> getProductCount() {
         long count = productService.getTotalProductCount();

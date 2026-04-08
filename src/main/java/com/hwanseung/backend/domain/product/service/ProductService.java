@@ -22,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -112,6 +113,41 @@ public class ProductService {
 
                     return ProductListResponseDTO.from(product, likeCount, chatCount, liked);
                 })
+                .toList();
+    }
+
+    // 메인페이지 인기 매물 조회
+    @Transactional(readOnly = true)
+    public List<ProductListResponseDTO> getPopularProducts(String loginUserId) {
+        List<Product> products = productRepository.findAllVisibleSaleProductsOrderByCreatedAtDesc();
+
+        User loginUser = null;
+        if (loginUserId != null && !loginUserId.isBlank()) {
+            loginUser = userRepository.findByUsername(loginUserId).orElse(null);
+        }
+
+        User finalLoginUser = loginUser;
+
+        return products.stream()
+                .map(product -> {
+                    long likeCount = productLikeRepository.countByProduct(product);
+                    long chatCount = chatRoomRepository.countByItemIdAndRoomType(
+                            product.getProductId().longValue(),
+                            RoomType.TRADE
+                    );
+
+                    boolean liked = false;
+                    if (finalLoginUser != null) {
+                        liked = productLikeRepository.existsByProductAndUser(product, finalLoginUser);
+                    }
+
+                    return ProductListResponseDTO.from(product, likeCount, chatCount, liked);
+                })
+                .sorted(
+                        Comparator.comparingLong(ProductListResponseDTO::getLikeCount).reversed()
+                                .thenComparing(ProductListResponseDTO::getProductId, Comparator.reverseOrder())
+                )
+                .limit(8)
                 .toList();
     }
 
@@ -301,8 +337,8 @@ public class ProductService {
     @Transactional(readOnly = true)
     public List<ProductListResponseDTO> getMySalesList(String sellerId) {
 
-        List<Product> myProducts = productRepository.findBySellerIdOrderByCreatedAtDesc(sellerId);
-        //내림차순으로 가져오기(최신부터) -> findBySellerId-> 판매자 id 컬럼을 -> 그래서 myProducts라는 Product자료형의 List배열에 담기
+        // 🚨 이 부분 수정! 방금 만든 새로운 레포지토리 메서드를 호출합니다.
+        List<Product> myProducts = productRepository.findBySellerIdAndDeletedAtIsNullOrderByCreatedAtDesc(sellerId);
 
         // 2. 좋아요(찜) 갯수 계산용으로 내 정보 가져오기
         User seller = userRepository.findByUsername(sellerId).orElse(null);

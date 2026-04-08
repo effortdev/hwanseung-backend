@@ -18,6 +18,9 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     List<Product> findBySellerIdOrderByCreatedAtDesc(String sellerId);
     //sellerId가져오기(product테이블)
 
+        //삭제된 데이터 확인 및 가리기
+    List<Product> findBySellerIdAndDeletedAtIsNullOrderByCreatedAtDesc(String sellerId);
+
     // 1. 전체 상품 개수 (기본 제공)
     long count();
 
@@ -37,6 +40,16 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     // 삭제되지 않은 상품 단건 조회
     Optional<Product> findByProductIdAndDeletedAtIsNull(Integer productId);
+
+    // 메인페이지 인기 매물 후보
+    @Query("""
+        select p
+        from Product p
+        where p.deletedAt is null
+          and p.saleStatus = 'SALE'
+        order by p.createdAt desc
+    """)
+    List<Product> findAllVisibleSaleProductsOrderByCreatedAtDesc();
 
 
     // 🌟 내 주변 매물 찾기 쿼리 (Haversine 공식)

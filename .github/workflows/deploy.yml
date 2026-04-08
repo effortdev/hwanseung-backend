@@ -31,5 +31,7 @@ jobs:
           # 서버에 접속해서 치는 명령어들입니다.
           script: |
             cd ~/hsproject
+
+            docker-compose down
             # backend 컨테이너만 다시 빌드해서 재실행합니다. (DB와 Redis는 건드리지 않음)
             docker-compose up -d --build

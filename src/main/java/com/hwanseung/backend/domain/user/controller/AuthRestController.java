@@ -65,6 +65,13 @@ public class AuthRestController {
         return ResponseEntity.ok(Map.of("isDuplicate", isDuplicate));
     }
 
+    // 연락처 중복 체크
+    @GetMapping("/api/auth/check-contact")
+    public ResponseEntity<Map<String, Boolean>> checkContact(@RequestParam("contact") String contact) {
+        boolean isDuplicate = userService.isContactDuplicate(contact);
+        return ResponseEntity.ok(Map.of("isDuplicate", isDuplicate));
+    }
+
     /** 1. 이메일 인증번호 발송 */
     @PostMapping("/api/auth/email/send-code")
     public ResponseEntity<?> sendEmailCode(@RequestBody Map<String, String> request) {

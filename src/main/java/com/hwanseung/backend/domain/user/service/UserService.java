@@ -86,7 +86,11 @@ public class UserService {
         user.setAddress(requestDto.getAddress());
         user.setDetailAddress(requestDto.getDetailAddress());
         user.setZipCode(requestDto.getZipCode());
-
+        user.setGender(requestDto.getGender());
+        user.setBirthday(requestDto.getBirthday());
+        if (requestDto.getPassword() != null && !requestDto.getPassword().trim().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(requestDto.getPassword()));
+        }
         if (requestDto.getNeighborhood() != null) {
             user.setNeighborhood(requestDto.getNeighborhood());
             user.setNeighborhoodAuthenticated(true); // 동네가 들어오면 인증 완료로 처리!
@@ -117,5 +121,8 @@ public class UserService {
 
     public boolean isEmailDuplicate(String email) {
         return userRepository.existsByEmail(email);
+
+    }public boolean isContactDuplicate(String contact) {
+        return userRepository.existsByContact(contact);
     }
 }

@@ -292,10 +292,11 @@ public class ProductService {
     }
 
     // 상품 상세 조회
-    @Transactional(readOnly = true)
     public ProductDetailResponseDTO getProductDetail(Integer productId) {
         Product product = productRepository.findByProductIdAndDeletedAtIsNull(productId)
                 .orElseThrow(() -> new RuntimeException("상품이 없거나 삭제된 상품입니다."));
+
+        product.increaseViewCount();
 
         return ProductDetailResponseDTO.from(product);
     }
@@ -317,6 +318,52 @@ public class ProductService {
         }
 
         product.markAsSoldOut();
+    }
+
+    // 예약중 처리
+    public void markProductAsReserved(Integer productId, Authentication authentication) {
+        CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
+        String loginUserId = loginUser.getUsername();
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("상품 없음"));
+
+        if (product.getDeletedAt() != null) {
+            throw new RuntimeException("삭제된 상품입니다.");
+        }
+
+        if (!product.getSellerId().equals(loginUserId)) {
+            throw new RuntimeException("예약중 처리 권한이 없습니다.");
+        }
+
+        if (product.isSoldOut()) {
+            throw new RuntimeException("판매완료된 상품은 예약중으로 변경할 수 없습니다.");
+        }
+
+        product.markAsReserved();
+    }
+
+    // 예약해제 -> 판매중
+    public void markProductAsSale(Integer productId, Authentication authentication) {
+        CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
+        String loginUserId = loginUser.getUsername();
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("상품 없음"));
+
+        if (product.getDeletedAt() != null) {
+            throw new RuntimeException("삭제된 상품입니다.");
+        }
+
+        if (!product.getSellerId().equals(loginUserId)) {
+            throw new RuntimeException("예약해제 권한이 없습니다.");
+        }
+
+        if (product.isSoldOut()) {
+            throw new RuntimeException("판매완료된 상품은 판매중으로 변경할 수 없습니다.");
+        }
+
+        product.markAsSale();
     }
 
     // 상품 총 갯수

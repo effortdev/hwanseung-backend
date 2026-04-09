@@ -73,6 +73,7 @@ public class User {
     private Auth auth;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "status", columnDefinition = "ENUM('ACTIVE', 'SUSPENDED', 'SECESSION') DEFAULT 'ACTIVE'")
     private Status status = Status.ACTIVE;
 
     @Column

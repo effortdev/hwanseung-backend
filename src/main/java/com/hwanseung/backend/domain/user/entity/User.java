@@ -72,8 +72,8 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Auth auth;
 
-    @Enumerated(EnumType.STRING)
-    private Status status = Status.ACTIVE;
+//    @Enumerated(EnumType.STRING)
+//    private Status status = Status.ACTIVE;
 
     @Column
     private Integer trustScore;
@@ -95,6 +95,10 @@ public class User {
     @Column(name = "profile_original_name")
     private String profileOriginalName;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", columnDefinition = "ENUM('ACTIVE', 'SUSPENDED', 'SECESSION') DEFAULT 'ACTIVE'")
+    private UserStatus status;
+
     @Builder
     public User(String email, String contact, String username, String password, Role role,
                 String name, String nickname, String birthday, String gender,
@@ -111,15 +115,21 @@ public class User {
         this.zipCode = zipCode;
         this.address = address;
         this.detailAddress = detailAddress;
-        this.status =  status;
+//        this.status =  status;
         this.trustScore = trustScore;
         this.reportCount = reportCount;
+        this.status = (status != null) ? status : UserStatus.ACTIVE;
+
     }
 
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void withdraw() { //회원탈퇴
+        this.status = UserStatus.SECESSION;
     }
 
 }

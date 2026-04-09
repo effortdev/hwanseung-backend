@@ -1,7 +1,9 @@
 package com.hwanseung.backend.domain.user.dto;
 
+import com.hwanseung.backend.domain.admin.dto.Status;
 import com.hwanseung.backend.domain.user.entity.Role;
 import com.hwanseung.backend.domain.user.entity.User;
+import jakarta.persistence.Column;
 import lombok.*;
 import org.springframework.util.StringUtils;
 
@@ -28,6 +30,9 @@ public class UserRequestDTO {
     private boolean isNeighborhoodAuthenticated; // 인증 여부 (true/false)
     private String profileImagePath;
     private String profileOriginalName;
+    private Status status;
+    private Integer trustScore;
+    private Integer reportCount;
 
     /**
      * DTO를 엔티티로 변환하는 메서드
@@ -38,10 +43,10 @@ public class UserRequestDTO {
                 .username(this.username)
                 .password(this.password)
                 .nickname(this.nickname)
+                .email(hasText(this.email))
                 // 선택 입력 항목들: 빈 문자열이면 null로 처리
                 .birthday(hasText(this.birthday))
                 .contact(hasText(this.contact))
-                .email(hasText(this.email))
                 .gender(hasText(this.gender))
                 .zipCode(hasText(this.zipCode))
                 .address(hasText(this.address))
@@ -49,6 +54,9 @@ public class UserRequestDTO {
                 .role(this.role)
                 .profileImagePath(hasText(this.profileImagePath))
                 .profileOriginalName(hasText(this.profileOriginalName))
+                .status(this.status = (status != null) ? status : Status.ACTIVE)
+                .trustScore(this.trustScore)
+                .reportCount(this.reportCount)
                 .build();
     }
 

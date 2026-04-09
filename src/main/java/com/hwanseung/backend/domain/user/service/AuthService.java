@@ -43,7 +43,9 @@ public class AuthService {
 
     /** SMS 인증 요청 로직 */
     public void requestSmsVerification(String phoneNumber) {
-        // 전화번호 중복 체크가 필요하다면 여기에 추가
+        if (userRepository.existsByContact(phoneNumber)) {
+            throw new IllegalStateException("이미 가입된 연락처입니다.");
+        }
         String code = verificationService.createCode(phoneNumber);
         smsService.sendSms(phoneNumber, code);
     }
@@ -62,6 +64,11 @@ public class AuthService {
         System.out.println(requestDto);
         User user = this.userRepository.findByUsername(requestDto.getUsername()).orElseThrow(
                 () -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다. username = " + requestDto.getUsername()));
+
+        if (user.getStatus() == null || !"ACTIVE".equals(user.getStatus().name())) {
+            throw new IllegalArgumentException("탈퇴하거나 정지된 계정입니다.");
+        }
+
         if (!passwordEncoder.matches(requestDto.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다. username = " + requestDto.getUsername());
         }

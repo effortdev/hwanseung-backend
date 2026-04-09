@@ -5,6 +5,7 @@ import com.hwanseung.backend.domain.chat.entity.ChatMessage;
 import com.hwanseung.backend.domain.chat.entity.ChatRoom;
 import com.hwanseung.backend.domain.chat.service.ChatService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,11 @@ import java.util.UUID;
 public class ChatRoomController {
 
     private final ChatService chatService;
+
+    // 🌟 [핵심 변경 포인트 1] properties 파일에 적어둔 경로를 가져옵니다.
+    // 로컬이면 "C:/bImg/", 서버면 "/app/uploads/" 가 자동으로 들어옵니다.
+    @Value("${custom.upload-path}")
+    private String baseUploadPath;
 
 
     // [React 호출 2] 채팅방에 입장했을 때 이전 대화 기록 불러오기
@@ -131,7 +137,10 @@ public class ChatRoomController {
         // 1. 채팅 이미지를 모아둘 별도 폴더 지정 (상품 이미지와 섞이지 않도록 chat 폴더 사용)
 //        String uploadDir = "C:/bImg/chat/";
         // 🛠️ 수정: 윈도우 경로를 리눅스 경로로 변경
-        String uploadDir = "/app/uploads/chat/";
+//        String uploadDir = "/app/uploads/chat/";
+
+        // 🌟 [핵심 변경 포인트 2] 하드코딩 삭제하고, 가져온 기본 경로 뒤에 "chat/" 만 붙여줍니다.
+        String uploadDir = baseUploadPath + "chat/";
 
         File dir = new File(uploadDir);
         if (!dir.exists()) {

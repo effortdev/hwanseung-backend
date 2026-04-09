@@ -25,7 +25,7 @@ public class UserService {
     @Value("${custom.upload-path}")
     private String uploadPath;
 
-    /** User 조회 */
+//    user조회
     @Transactional
     public UserResponseDTO findById(Long id) {
         User user = this.userRepository.findById(id).orElseThrow(
@@ -33,17 +33,14 @@ public class UserService {
         return new UserResponseDTO(user);
     }
 
-    /** User 수정 (🌟 마법의 더티 체킹 적용) */
+//    user 수정
     @Transactional
     public void update(Long id, UserRequestDTO requestDto, MultipartFile profileImage) throws IOException {
-        // 1. DB에서 수정할 유저를 찾아옵니다.
         User user = this.userRepository.findById(id).orElseThrow(
                 () -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다. user_id = " + id));
 
-        // 🌟 새 이미지가 들어왔을 때만 실행
         if (profileImage != null && !profileImage.isEmpty()) {
 
-            // [추가] 기존 이미지가 있다면 실제 파일 삭제
             String oldImagePath = user.getProfileImagePath(); // DB에 저장된 경로: /api/imgs/profile/uuid_name.jpg
             if (oldImagePath != null && !oldImagePath.isEmpty()) {
                 // 웹 경로(/api/imgs/)를 실제 파일 경로(uploadPath)로 변환
@@ -89,11 +86,12 @@ public class UserService {
 
         if (requestDto.getNeighborhood() != null) {
             user.setNeighborhood(requestDto.getNeighborhood());
-            user.setNeighborhoodAuthenticated(true); // 동네가 들어오면 인증 완료로 처리!
+            user.setNeighborhoodAuthenticated(true);
         }
 
     }
-    /** User 삭제 */
+
+//    user삭제
     @Transactional
     public void delete(Long id) {
         User user = this.userRepository.findById(id).orElseThrow(

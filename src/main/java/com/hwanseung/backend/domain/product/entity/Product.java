@@ -77,6 +77,11 @@ public class Product {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt; // 삭제일
 
+    // 🌟 [여기 추가!] DB의 view_count 컬럼과 매핑하고 기본값을 0으로 설정
+    @Builder.Default
+    @Column(name = "view_count", nullable = false)
+    private int viewCount = 0;
+
 
     // 상품 1개 : 이미지 여러 개
     @Builder.Default

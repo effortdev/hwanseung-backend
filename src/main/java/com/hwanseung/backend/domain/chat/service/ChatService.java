@@ -1,5 +1,6 @@
 package com.hwanseung.backend.domain.chat.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hwanseung.backend.domain.chat.dto.ChatRoomListResponseDTO;
 import com.hwanseung.backend.domain.chat.entity.ChatMessage;
 import com.hwanseung.backend.domain.chat.entity.ChatRoom;
@@ -9,9 +10,11 @@ import com.hwanseung.backend.domain.chat.repository.ChatRoomRepository;
 import com.hwanseung.backend.domain.product.entity.Product;
 import com.hwanseung.backend.domain.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -21,6 +24,10 @@ public class ChatService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final ProductRepository productRepository;
+
+    // 🚀 [추가] Redis에 저장된 최신 메시지를 훔쳐(?) 오기 위한 도구들
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
 
     // 1. 중고거래 채팅방 생성 또는 조회
     @Transactional
@@ -134,7 +141,63 @@ public class ChatService {
         // 1. 방에 들어왔으니, 이 방에서 상대방이 보낸 메시지를 전부 읽음(true) 처리합니다!
         chatMessageRepository.markMessagesAsRead(roomId, userId);
 
+        // 2. 일단 진짜 DB(MariaDB)에서 안전하게 보관된 과거 기록을 싹 가져옵니다.
+        // 💡 주의: List가 변경 가능해야 하므로 new ArrayList<> 로 감싸줍니다!
+        List<ChatMessage> history = new ArrayList<>(chatMessageRepository.findByRoomIdOrderByCreatedAtAsc(roomId));
+
+
+        // ==========================================================
+        // 🚀 3. "Redis 임시 보관함(chat_messages_buffer)"을 뒤집니다!
+        // ==========================================================
+        try {
+            // 💡 회원님의 RedisSubscriber에 적혀있던 바로 그 키 이름!
+            String redisKey = "chat_messages_buffer";
+
+            // Redis에서 해당 키에 쌓인 리스트를 전부 가져옵니다.
+            List<Object> redisMessages = redisTemplate.opsForList().range(redisKey, 0, -1);
+
+            if (redisMessages != null) {
+                for (Object obj : redisMessages) {
+                    // RedisSubscriber 코드를 보니 JSON 문자열로 저장하셨네요! String으로 꺼냅니다.
+                    String jsonStr = (String) obj;
+
+                    // JSON 문자열을 파싱해서 데이터를 안전하게 꺼냅니다.
+                    com.fasterxml.jackson.databind.JsonNode jsonNode = objectMapper.readTree(jsonStr);
+
+                    String cachedRoomId = jsonNode.has("roomId") ? jsonNode.get("roomId").asText() : "";
+
+                    // 🚨 가져온 메시지가 "지금 내가 들어온 이 방(roomId)"의 메시지일 때만 처리!
+                    if (roomId.equals(cachedRoomId)) {
+
+                        // DB에 넣을 때처럼 ChatMessage 엔티티를 임시로 만듭니다.
+                        ChatMessage cachedMsg = new ChatMessage();
+                        cachedMsg.setRoomId(cachedRoomId);
+
+                        // 프론트에서 sender로 보냈을 수도 있고 senderId로 보냈을 수도 있으니 둘 다 체크!
+                        String sender = jsonNode.has("sender") ? jsonNode.get("sender").asText() :
+                                (jsonNode.has("senderId") ? jsonNode.get("senderId").asText() : "");
+                        cachedMsg.setSenderId(sender);
+
+                        cachedMsg.setContent(jsonNode.has("content") ? jsonNode.get("content").asText() : "");
+
+                        // 방금 가져온 거니까 내가 보낸 게 아니면 무조건 읽은 걸로 강제 취급!
+                        if (!userId.equals(sender)) {
+                            cachedMsg.setRead(true);
+                        }
+
+                        // DB 내역 뒤에 방금 친 Redis 내역을 이어 붙입니다!
+                        history.add(cachedMsg);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Redis에서 최신 채팅 불러오기 실패 (DB 내역만 반환): " + e.getMessage());
+        }
+        // ==========================================================
+
+        // 4. 과거 기록(DB)과 방금 친 기록(Redis)이 완벽하게 시간순으로 합쳐진 리스트를 프론트엔드에 던져줍니다!
+        return history;
         // 2. 그리고 대화 기록을 싹 불러와서 프론트로 던져줍니다.
-        return chatMessageRepository.findByRoomIdOrderByCreatedAtAsc(roomId);
+//        return chatMessageRepository.findByRoomIdOrderByCreatedAtAsc(roomId);
     }
 }

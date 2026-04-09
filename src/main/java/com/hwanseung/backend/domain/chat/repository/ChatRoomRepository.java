@@ -19,4 +19,7 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, String> {
 
     // 🚀 [추가] 내가 구매자이거나 판매자인 채팅방 목록 모두 조회!
     List<ChatRoom> findByBuyerIdOrSellerId(String buyerId, String sellerId);
+
+    // 상품별 중고거래 채팅방 수
+    long countByItemIdAndRoomType(Long itemId, RoomType roomType);
 }

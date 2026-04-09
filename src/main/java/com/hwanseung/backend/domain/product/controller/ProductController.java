@@ -6,6 +6,7 @@ import com.hwanseung.backend.domain.product.dto.ProductListResponseDTO;
 import com.hwanseung.backend.domain.product.dto.ProductUpdateRequestDTO;
 import com.hwanseung.backend.domain.product.entity.Product;
 import com.hwanseung.backend.domain.product.service.ProductService;
+import com.hwanseung.backend.domain.user.config.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +40,15 @@ public class ProductController {
         ));
     }
 
+    //내 찜목록
+    // ProductController.java 에 추가
+    @GetMapping("/wishlist")
+    public ResponseEntity<List<ProductListResponseDTO>> getWishlist(Authentication authentication) {
+        CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
+        List<ProductListResponseDTO> wishlist = productService.getWishlist(loginUser.getUsername());
+        return ResponseEntity.ok(wishlist);
+    }
+
     // 상품 목록 조회
     @GetMapping
     public ResponseEntity<List<ProductListResponseDTO>> getProductList(Authentication authentication) {
@@ -54,6 +64,14 @@ public class ProductController {
         System.out.println("👉 상세 조회 요청 id = " + productId);
         ProductDetailResponseDTO productDetail = productService.getProductDetail(productId);
         return ResponseEntity.ok(productDetail);
+    }
+
+    // 메인페이지 인기 매물 조회
+    @GetMapping("/popular")
+    public ResponseEntity<List<ProductListResponseDTO>> getPopularProducts(Authentication authentication) {
+        String loginUserId = authentication != null ? authentication.getName() : null;
+        List<ProductListResponseDTO> popularProducts = productService.getPopularProducts(loginUserId);
+        return ResponseEntity.ok(popularProducts);
     }
 
     @GetMapping("/count")
@@ -72,13 +90,13 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
-    // 상품 수정
-    @PutMapping("/{productId}")
+    // 상품 수정 multipart/form-data 로 받기
+    @PutMapping(value = "/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateProduct(
             @PathVariable Integer productId,
-            @RequestBody ProductUpdateRequestDTO requestDTO,
+            @ModelAttribute ProductUpdateRequestDTO requestDTO,
             Authentication authentication
-    ) {
+    ) throws IOException {
         productService.updateProduct(productId, requestDTO, authentication);
 
         return ResponseEntity.ok(Map.of(
@@ -114,4 +132,46 @@ public class ProductController {
                 "productId", productId
         ));
     }
+
+    // 예약중 처리
+    @PatchMapping("/{productId}/reserved")
+    public ResponseEntity<?> markProductAsReserved(
+            @PathVariable Integer productId,
+            Authentication authentication
+    ) {
+        productService.markProductAsReserved(productId, authentication);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "예약중 처리되었습니다.",
+                "productId", productId
+        ));
+    }
+
+    // 예약해제 -> 판매중
+    @PatchMapping("/{productId}/sale")
+    public ResponseEntity<?> markProductAsSale(
+            @PathVariable Integer productId,
+            Authentication authentication
+    ) {
+        productService.markProductAsSale(productId, authentication);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "판매중으로 변경되었습니다.",
+                "productId", productId
+        ));
+    }
+
+    // 🌟 [추가] 내 판매 내역 API
+    @GetMapping("/my-sales")
+    public ResponseEntity<List<ProductListResponseDTO>> getMySalesList(Authentication authentication) {
+
+        String loginUserId = authentication.getName();
+
+        List<ProductListResponseDTO> mySalesList = productService.getMySalesList(loginUserId);
+
+        return ResponseEntity.ok(mySalesList);
+    }
+
+
+
 }

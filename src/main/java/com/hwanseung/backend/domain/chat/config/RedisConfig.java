@@ -1,6 +1,7 @@
 package com.hwanseung.backend.domain.chat.config; // 본인의 패키지 경로에 맞게 수정하세요!
 
 import com.hwanseung.backend.domain.chat.service.RedisSubscriber; // 본인의 경로에 맞게 수정
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -15,10 +16,22 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @Configuration
 public class RedisConfig {
 
+    // application.properties의 값을 가져옵니다.
+    @Value("${spring.data.redis.host}")
+    private String redisHost;
+
+    @Value("${spring.data.redis.port}")
+    private int redisPort;
+
     // 1. Redis 연결 팩토리
+//    @Bean
+//    public RedisConnectionFactory redisConnectionFactory() {
+//        return new LettuceConnectionFactory();
+//    }
+
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
-        return new LettuceConnectionFactory();
+        return new LettuceConnectionFactory(redisHost, redisPort);
     }
 
     // 2. Redis에 메시지를 발행할 때 사용하는 템플릿

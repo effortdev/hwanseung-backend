@@ -26,6 +26,7 @@ public class UserRestController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+
     /** 회원정보 조회 API */
     @GetMapping("/api/user")
     public ResponseEntity<?> findUser(@RequestHeader("Authorization") String accessToken) {
@@ -68,7 +69,6 @@ public class UserRestController {
 
     }
 
-
     @GetMapping("/api/user/count")
     public ResponseEntity<Map<String, Long>> getUserCount() {
         long count = userService.getTotalUserCount();
@@ -76,7 +76,6 @@ public class UserRestController {
         response.put("totalCount", count);
         return ResponseEntity.ok(response);
     }
-
     @PostMapping("/api/user/verify-password")
     public ResponseEntity<?> verifyPassword(
             @RequestHeader("Authorization") String accessToken,
@@ -103,6 +102,4 @@ public class UserRestController {
         // ✅ 맞으면 200(OK) 성공 신호를 보냅니다.
         return ResponseEntity.ok(Map.of("message", "비밀번호가 확인되었습니다."));
     }
-
-
 }

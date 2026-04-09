@@ -62,10 +62,6 @@ public class Product {
     @Column(name = "sale_status", nullable = false, length = 20)
     private String saleStatus = "SALE"; // 판매상태 SALE / SOLD_OUT / RESERVED
 
-    @Builder.Default
-    @Column(name = "view_count", nullable = false)
-    private int viewCount = 0; // 조회수
-
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt; // 생성일

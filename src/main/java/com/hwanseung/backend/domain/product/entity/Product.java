@@ -73,6 +73,8 @@ public class Product {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt; // 삭제일
 
+    @Column
+    private int reportCount;
 
     // 상품 1개 : 이미지 여러 개
     @Builder.Default

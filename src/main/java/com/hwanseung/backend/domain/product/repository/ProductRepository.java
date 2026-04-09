@@ -3,9 +3,12 @@ package com.hwanseung.backend.domain.product.repository;
 import com.hwanseung.backend.domain.product.entity.Product;
 import com.hwanseung.backend.domain.product.entity.ProductLike;
 import io.lettuce.core.dynamic.annotation.Param;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,6 +29,26 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     // deleted_at 컬럼이 null인 데이터만 카운트
     long countByDeletedAtIsNull();
+
+    // ==========================================
+    long countByCreatedAtAfter(LocalDateTime dateTime);
+    long countByPriceLessThanEqual(int price);
+    long countByPriceBetween(int min, int max);
+    long countByPriceGreaterThan(int price);
+    long countByCategory(String category);
+
+    @Query("SELECT p.category, COUNT(p) FROM Product p GROUP BY p.category ORDER BY COUNT(p) DESC")
+    List<Object[]> countByCategory();
+
+    @Query("SELECT p FROM Product p WHERE " +
+            "(:keyword = '' OR p.title LIKE %:keyword% OR p.location LIKE %:keyword%) " +
+            "AND (:status = '' OR p.saleStatus = :status) " +
+            "AND (:category = '' OR p.category = :category)")
+    Page<Product> searchProducts(@Param("keyword") String keyword,
+                                 @Param("status") String status,
+                                 @Param("category") String category,
+                                 Pageable pageable);
+    // ==========================================
 
     // 판매중 먼저, 판매완료 아래, 그 안에서 최신순
     @Query("""

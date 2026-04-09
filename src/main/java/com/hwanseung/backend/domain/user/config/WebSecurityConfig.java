@@ -28,6 +28,10 @@ public class WebSecurityConfig {
                         // 관리자 : 관리자 관련 모든 요청에 대해 승인된 사용자 중 ADMIN 권한이 있는 사용자만 허용
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
+                        // 관리자 : 카테고리 관련 모든 요청에 대해 승인된 사용자 중
+                        .requestMatchers("/api/admin/categories").hasAnyRole("ADMIN", "SUPER", "SUB")
+                        .requestMatchers("/api/stats/..").hasAnyRole("ADMIN", "SUPER", "SUB")
+
                         // 회원가입 및 로그인 관련 모든 요청에 대해 아무나 승인
                         .requestMatchers("/api/auth/**").permitAll()
 
@@ -51,6 +55,9 @@ public class WebSecurityConfig {
 
                         // 게시글 관련 GET 요청에 대해 아무나 승인
                         .requestMatchers(HttpMethod.GET, "/api/post/**").permitAll()
+
+                        // 카테고리 조회 일반 사용자 요청에 대해 승인
+                        .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
 
                         // 기타 모든 요청에 대해 승인된 사용자만 허용
                         .requestMatchers("/api/**").authenticated()

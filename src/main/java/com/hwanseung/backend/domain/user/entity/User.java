@@ -3,6 +3,7 @@ package com.hwanseung.backend.domain.user.entity;
 import com.hwanseung.backend.domain.admin.dto.Status;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -73,7 +74,9 @@ public class User {
     private Auth auth;
 
     @Enumerated(EnumType.STRING)
-    private Status status = Status.ACTIVE;
+    @Column(nullable = false)
+    @ColumnDefault("'ACTIVE'")
+    private Status status;
 
     @Column
     private Integer trustScore;
@@ -94,6 +97,12 @@ public class User {
 
     @Column(name = "profile_original_name")
     private String profileOriginalName;
+
+    @Column
+    private LocalDateTime suspendedAt;
+
+    @Column
+    private LocalDateTime suspendUntil;
 
     @Builder
     public User(String email, String contact, String username, String password, Role role,

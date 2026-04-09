@@ -2,7 +2,9 @@ package com.hwanseung.backend.domain.admin.dto;
 
 public enum Status {
     ACTIVE("ACTIVE"),
-    SUSPENDED("SUSPENDED");
+    SUSPENDED("SUSPENDED"),
+    SECESSION("SECESSION"),
+    BLOCKED("BLOCKED");
 
     private String status;
 

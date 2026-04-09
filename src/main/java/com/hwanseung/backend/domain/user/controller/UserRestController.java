@@ -52,13 +52,20 @@ public class UserRestController {
 
     }
 
-    /** 회원정보 삭제 API */
-    @DeleteMapping("/api/user")
-    public ResponseEntity<?> deleteUser(@RequestHeader("Authorization") String accessToken) {
+    /** 회원탈퇴 API */
+    @PostMapping("/api/user/withdraw")
+    public ResponseEntity<?> deleteUser(@RequestBody Map<String, String> request,@RequestHeader("Authorization") String accessToken) {
         // 🌟 토큰에서 Long id를 꺼냅니다!
-        Long id = this.jwtTokenProvider.getUserIdFromToken(accessToken.substring(7));
-        this.userService.delete(id);
-        return ResponseEntity.status(HttpStatus.OK).body(null);
+        try {
+            String password = request.get("password");
+            Long id = this.jwtTokenProvider.getUserIdFromToken(accessToken.substring(7));
+            this.userService.withdraw(id, password);
+            return ResponseEntity.status(HttpStatus.OK).body(null);
+        }catch (RuntimeException e) {
+            // 비밀번호 틀림 등의 사유를 400(Bad Request)으로 전달
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+
     }
 
 

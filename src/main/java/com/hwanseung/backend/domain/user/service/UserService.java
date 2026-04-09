@@ -1,6 +1,7 @@
 package com.hwanseung.backend.domain.user.service;
 
 // 삭제: import jakarta.transaction.Transactional;
+import com.hwanseung.backend.domain.user.repository.AuthRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional; // 이걸로 교체
 import com.hwanseung.backend.domain.user.entity.User;
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final AuthRepository authRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${custom.upload-path}")
@@ -97,12 +99,23 @@ public class UserService {
         }
 
     }
-    /** User 삭제 */
+    /** User 탈퇴 */
     @Transactional
-    public void delete(Long id) {
-        User user = this.userRepository.findById(id).orElseThrow(
-                () -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다. user_id = " + id));
-        this.userRepository.delete(user);
+    public void withdraw(Long userId, String Password) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다."));
+
+        // 비밀번호 확인 로직 (PasswordEncoder 사용)
+        if (!passwordEncoder.matches(Password, user.getPassword())) {
+            throw new RuntimeException("비밀번호가 일치하지 않습니다.");
+        }
+
+        // 상태 변경
+        authRepository.deleteByUserId(userId);
+        user.withdraw();
+
+        // 메서드가 끝날 때 @Transactional에 의해 DB에 UPDATE 쿼리가 날아갑니다.
+        // 이때 status는 'SECESSION'으로, updated_at은 현재 시간으로 업데이트됩니다!
     }
 
     /* User테이블 총 사용자 수 */

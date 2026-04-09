@@ -73,6 +73,7 @@ public class User {
     private Auth auth;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "status", columnDefinition = "ENUM('ACTIVE', 'SUSPENDED', 'SECESSION') DEFAULT 'ACTIVE'")
     private Status status = Status.ACTIVE;
 
     @Column
@@ -102,7 +103,7 @@ public class User {
     @Builder
     public User(String email, String contact, String username, String password, Role role,
                 String name, String nickname, String birthday, String gender,
-                String zipCode, String address, String detailAddress) {
+                String zipCode, String address, String detailAddress,Status status) {
         this.email = email;
         this.contact = contact;
         this.username = username;
@@ -115,10 +116,8 @@ public class User {
         this.zipCode = zipCode;
         this.address = address;
         this.detailAddress = detailAddress;
-        this.status =  status;
-        this.trustScore = trustScore;
-        this.reportCount = reportCount;
-//        this.status = (status != null) ? status : UserStatus.ACTIVE;
+//        this.status =  status;
+        this.status = (status != null) ? status : Status.ACTIVE;
 
     }
 

@@ -3,6 +3,7 @@ package com.hwanseung.backend.domain.user.entity;
 import com.hwanseung.backend.domain.admin.dto.Status;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -73,6 +74,7 @@ public class User {
     private Auth auth;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "status", columnDefinition = "ENUM('ACTIVE', 'SUSPENDED', 'SECESSION') DEFAULT 'ACTIVE'")
     private Status status = Status.ACTIVE;
 
     @Column
@@ -95,9 +97,11 @@ public class User {
     @Column(name = "profile_original_name")
     private String profileOriginalName;
 
-//    @Enumerated(EnumType.STRING)
-//    @Column(name = "status", columnDefinition = "ENUM('ACTIVE', 'SUSPENDED', 'SECESSION') DEFAULT 'ACTIVE'")
-//    private UserStatus status;
+    @Column
+    private LocalDateTime suspendedAt;
+
+    @Column
+    private LocalDateTime suspendUntil;
 
     @Builder
     public User(String email, String contact, String username, String password, Role role,
@@ -115,6 +119,9 @@ public class User {
         this.zipCode = zipCode;
         this.address = address;
         this.detailAddress = detailAddress;
+//        this.status =  status;
+        this.status = (status != null) ? status : Status.ACTIVE;
+
         this.status =  status;
         this.trustScore = trustScore;
         this.reportCount = reportCount;

@@ -133,6 +133,34 @@ public class ProductController {
         ));
     }
 
+    // 예약중 처리
+    @PatchMapping("/{productId}/reserved")
+    public ResponseEntity<?> markProductAsReserved(
+            @PathVariable Integer productId,
+            Authentication authentication
+    ) {
+        productService.markProductAsReserved(productId, authentication);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "예약중 처리되었습니다.",
+                "productId", productId
+        ));
+    }
+
+    // 예약해제 -> 판매중
+    @PatchMapping("/{productId}/sale")
+    public ResponseEntity<?> markProductAsSale(
+            @PathVariable Integer productId,
+            Authentication authentication
+    ) {
+        productService.markProductAsSale(productId, authentication);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "판매중으로 변경되었습니다.",
+                "productId", productId
+        ));
+    }
+
     // 🌟 [추가] 내 판매 내역 API
     @GetMapping("/my-sales")
     public ResponseEntity<List<ProductListResponseDTO>> getMySalesList(Authentication authentication) {

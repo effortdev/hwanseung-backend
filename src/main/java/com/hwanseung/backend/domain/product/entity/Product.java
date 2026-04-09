@@ -60,7 +60,11 @@ public class Product {
 
     @Builder.Default
     @Column(name = "sale_status", nullable = false, length = 20)
-    private String saleStatus = "SALE"; // 판매상태 SALE / SOLD_OUT
+    private String saleStatus = "SALE"; // 판매상태 SALE / SOLD_OUT / RESERVED
+
+    @Builder.Default
+    @Column(name = "view_count", nullable = false)
+    private int viewCount = 0; // 조회수
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -113,6 +117,26 @@ public class Product {
     // 판매완료 여부
     public boolean isSoldOut() {
         return "SOLD_OUT".equals(this.saleStatus);
+    }
+
+    // 예약중 처리
+    public void markAsReserved() {
+        this.saleStatus = "RESERVED";
+    }
+
+    // 예약중 해제 -> 다시 판매중
+    public void markAsSale() {
+        this.saleStatus = "SALE";
+    }
+
+    // 예약중 여부
+    public boolean isReserved() {
+        return "RESERVED".equals(this.saleStatus);
+    }
+
+    // 조회수 증가
+    public void increaseViewCount() {
+        this.viewCount++;
     }
 
     // 양방향 연관관계 편의 메서드

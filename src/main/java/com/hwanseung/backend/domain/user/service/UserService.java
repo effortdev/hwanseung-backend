@@ -1,6 +1,7 @@
 package com.hwanseung.backend.domain.user.service;
 
 // 삭제: import jakarta.transaction.Transactional;
+import com.hwanseung.backend.domain.user.repository.AuthRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional; // 이걸로 교체
 import com.hwanseung.backend.domain.user.entity.User;
@@ -20,12 +21,13 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final AuthRepository authRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${custom.upload-path}")
     private String uploadPath;
 
-//    user조회
+    /** User 조회 */
     @Transactional
     public UserResponseDTO findById(Long id) {
         User user = this.userRepository.findById(id).orElseThrow(
@@ -33,14 +35,17 @@ public class UserService {
         return new UserResponseDTO(user);
     }
 
-//    user 수정
+    /** User 수정 (🌟 마법의 더티 체킹 적용) */
     @Transactional
     public void update(Long id, UserRequestDTO requestDto, MultipartFile profileImage) throws IOException {
+        // 1. DB에서 수정할 유저를 찾아옵니다.
         User user = this.userRepository.findById(id).orElseThrow(
                 () -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다. user_id = " + id));
 
+        // 🌟 새 이미지가 들어왔을 때만 실행
         if (profileImage != null && !profileImage.isEmpty()) {
 
+            // [추가] 기존 이미지가 있다면 실제 파일 삭제
             String oldImagePath = user.getProfileImagePath(); // DB에 저장된 경로: /api/imgs/profile/uuid_name.jpg
             if (oldImagePath != null && !oldImagePath.isEmpty()) {
                 // 웹 경로(/api/imgs/)를 실제 파일 경로(uploadPath)로 변환
@@ -83,20 +88,34 @@ public class UserService {
         user.setAddress(requestDto.getAddress());
         user.setDetailAddress(requestDto.getDetailAddress());
         user.setZipCode(requestDto.getZipCode());
-
+        user.setGender(requestDto.getGender());
+        user.setBirthday(requestDto.getBirthday());
+        if (requestDto.getPassword() != null && !requestDto.getPassword().trim().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(requestDto.getPassword()));
+        }
         if (requestDto.getNeighborhood() != null) {
             user.setNeighborhood(requestDto.getNeighborhood());
-            user.setNeighborhoodAuthenticated(true);
+            user.setNeighborhoodAuthenticated(true); // 동네가 들어오면 인증 완료로 처리!
         }
 
     }
-
-//    user삭제
+    /** User 탈퇴 */
     @Transactional
-    public void delete(Long id) {
-        User user = this.userRepository.findById(id).orElseThrow(
-                () -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다. user_id = " + id));
-        this.userRepository.delete(user);
+    public void withdraw(Long userId, String Password) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다."));
+
+        // 비밀번호 확인 로직 (PasswordEncoder 사용)
+        if (!passwordEncoder.matches(Password, user.getPassword())) {
+            throw new RuntimeException("비밀번호가 일치하지 않습니다.");
+        }
+
+        // 상태 변경
+        authRepository.deleteByUserId(userId);
+        user.withdraw();
+
+        // 메서드가 끝날 때 @Transactional에 의해 DB에 UPDATE 쿼리가 날아갑니다.
+        // 이때 status는 'SECESSION'으로, updated_at은 현재 시간으로 업데이트됩니다!
     }
 
     /* User테이블 총 사용자 수 */
@@ -115,5 +134,8 @@ public class UserService {
 
     public boolean isEmailDuplicate(String email) {
         return userRepository.existsByEmail(email);
+
+    }public boolean isContactDuplicate(String contact) {
+        return userRepository.existsByContact(contact);
     }
 }

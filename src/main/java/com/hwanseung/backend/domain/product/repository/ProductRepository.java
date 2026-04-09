@@ -41,6 +41,16 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     // 삭제되지 않은 상품 단건 조회
     Optional<Product> findByProductIdAndDeletedAtIsNull(Integer productId);
 
+    // 메인페이지 인기 매물 후보
+    @Query("""
+        select p
+        from Product p
+        where p.deletedAt is null
+          and p.saleStatus = 'SALE'
+        order by p.createdAt desc
+    """)
+    List<Product> findAllVisibleSaleProductsOrderByCreatedAtDesc();
+
 
     // 🌟 내 주변 매물 찾기 쿼리 (Haversine 공식)
     // 6371은 지구의 반지름(km)입니다.

@@ -1,15 +1,25 @@
 package com.hwanseung.backend.domain.admin.service;
 
 import com.hwanseung.backend.domain.admin.dto.ReportDTO.*;
+import com.hwanseung.backend.domain.admin.dto.Status;
 import com.hwanseung.backend.domain.admin.entity.Report;
 import com.hwanseung.backend.domain.admin.entity.ReportHistory;
 import com.hwanseung.backend.domain.admin.repository.AdminReportRepository;
+import com.hwanseung.backend.domain.product.entity.Product;
+import com.hwanseung.backend.domain.product.repository.ProductRepository;
+import com.hwanseung.backend.domain.user.entity.User;
+import com.hwanseung.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,8 +31,8 @@ import java.util.stream.Collectors;
 public class AdminReportService {
 
     private final AdminReportRepository reportRepository;
-    // private final UserRepository userRepository;
-    // private final ProductRepository productRepository;
+    private final UserRepository userRepository;
+     private final ProductRepository productRepository;
 
     /** 신고 목록 조회 */
     @Transactional(readOnly = true)
@@ -78,13 +88,13 @@ public class AdminReportService {
         addHistory(report, "SUSPENDED", memo, adminNickname);
         reportRepository.save(report);
 
-        // 사용자 상태 변경
-        // User user = userRepository.findById(report.getReportedUserId())
-        //         .orElseThrow(() -> new NoSuchElementException("사용자를 찾을 수 없습니다."));
-        // user.setStatus("SUSPENDED");
-        // user.setSuspendedAt(LocalDateTime.now());
-        // user.setSuspendUntil(days == 0 ? null : LocalDateTime.now().plusDays(days));
-        // userRepository.save(user);
+//         사용자 상태 변경
+         User user = userRepository.findById(report.getReportedUserId())
+                 .orElseThrow(() -> new NoSuchElementException("사용자를 찾을 수 없습니다."));
+         user.setStatus(Status.valueOf("SUSPENDED"));
+         user.setSuspendedAt(LocalDateTime.now());
+         user.setSuspendUntil(days == 0 ? null : LocalDateTime.now().plusDays(days));
+         userRepository.save(user);
     }
 
     /** 기각 처리 */
@@ -111,18 +121,15 @@ public class AdminReportService {
     /** 정지 사용자 목록 */
     @Transactional(readOnly = true)
     public Map<String, Object> getSuspendedUsers(int page, int size, String keyword) {
-        // TODO: UserRepository에서 status = 'SUSPENDED' 인 사용자 조회
-        // @Query("SELECT u FROM User u WHERE u.status = 'SUSPENDED' " +
-        //        "AND (:keyword = '' OR u.nickname LIKE %:keyword% OR u.email LIKE %:keyword%)")
-        // Page<User> findSuspendedUsers(@Param("keyword") String keyword, Pageable pageable);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        Page<User> userPage = userRepository.findSuspendedUsers(keyword, pageable);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("content", List.of());
-        response.put("totalPages", 0);
-        response.put("totalElements", 0);
+        response.put("content", userPage.getContent());
+        response.put("totalPages", userPage.getTotalPages());
+        response.put("totalElements", userPage.getTotalElements());
         return response;
     }
-
     // --- 헬퍼 ---
 
     private Report findReport(Long reportId) {
@@ -162,10 +169,10 @@ public class AdminReportService {
         // 상품 정보 (상품 신고인 경우)
         TargetProductInfo productInfo = null;
         if ("PRODUCT".equals(r.getType()) && r.getTargetProductId() != null) {
-            // Product product = productRepository.findById(r.getTargetProductId()).orElse(null);
-            // if (product != null) {
-            //     productInfo = new TargetProductInfo(product.getId(), product.getTitle(), product.getPrice());
-            // }
+             Product product = productRepository.findById(Math.toIntExact(r.getTargetProductId())).orElse(null);
+             if (product != null) {
+                 productInfo = new TargetProductInfo(product.getProductId().longValue(), product.getTitle(), product.getPrice());
+             }
         }
 
         // 처리 이력

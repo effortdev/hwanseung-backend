@@ -39,6 +39,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     int updateUser(@Param("dto") UserRequestDTO dto);
 
     @Query("SELECT u FROM User u WHERE u.status = 'SUSPENDED' " +
-            "AND (:keyword = '' OR u.nickname LIKE %:keyword% OR u.email LIKE %:keyword%)")
+            "AND (:keyword IS NULL OR :keyword = '' OR u.nickname LIKE %:keyword% OR u.email LIKE %:keyword%)")
     Page<User> findSuspendedUsers(@Param("keyword") String keyword, Pageable pageable);
 }

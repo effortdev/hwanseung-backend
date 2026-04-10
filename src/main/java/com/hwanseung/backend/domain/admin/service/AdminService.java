@@ -42,6 +42,6 @@ public class AdminService {
     public void updateUserStatus(Long id, String status) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 존재하지 않습니다."));
-        user.setStatus( Status.valueOf(status)); // 유저 엔티티 내 상태 업데이트 로직
+        user.setStatus(Status.valueOf(status)); // 유저 엔티티 내 상태 업데이트 로직
     }
 }

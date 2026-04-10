@@ -74,7 +74,7 @@ public class AdminCategoryService {
             throw new NoSuchElementException("카테고리를 찾을 수 없습니다.");
         }
         // TODO: 해당 카테고리에 속한 상품 처리 (카테고리 초기화 등)
-        productRepository.clearCategoryByCategoryId(id);
+//        productRepository.clearCategoryByCategoryId(id);
         categoryRepository.deleteById(id);
     }
 

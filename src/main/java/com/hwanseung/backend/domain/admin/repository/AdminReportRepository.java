@@ -1,6 +1,7 @@
 package com.hwanseung.backend.domain.admin.repository;
 
 import com.hwanseung.backend.domain.admin.entity.Report;
+import com.hwanseung.backend.domain.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

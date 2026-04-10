@@ -28,10 +28,10 @@ public class AdminProductController {
     }
 
     /** 상품 상세 조회 */
-    @GetMapping("/{productId}")
-    public ResponseEntity<DetailResponse> getProductDetail(@PathVariable Long productId) {
-        return ResponseEntity.ok(productService.getProductDetail(productId));
-    }
+//    @GetMapping("/{productId}")
+//    public ResponseEntity<DetailResponse> getProductDetail(@PathVariable Long productId) {
+//        return ResponseEntity.ok(productService.getProductDetail(productId));
+//    }
 
     /** 상품 승인 */
     @PatchMapping("/{productId}/approve")

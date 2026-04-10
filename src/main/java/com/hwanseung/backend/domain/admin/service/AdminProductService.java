@@ -151,4 +151,7 @@ public class AdminProductService {
     public void bulkDelete(List<Long> productIds) {
 //         productRepository.deleteAllByIdInBatch(productIds);
     }
+
+//    public DetailResponse getProductDetail(Long productId) {
+//    }
 }

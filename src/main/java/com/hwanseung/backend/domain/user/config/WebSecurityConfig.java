@@ -28,6 +28,24 @@ public class WebSecurityConfig {
 //                        // 관리자 : 관리자 관련 모든 요청에 대해 승인된 사용자 중 ADMIN 권한이 있는 사용자만 허용
 //                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
 //
+//                        // 관리자 : 카테고리 관련 모든 요청에 대해 승인된 사용자 중
+//                        .requestMatchers("/api/admin/categories").hasAnyRole("ADMIN", "SUPER", "SUB")
+//                        .requestMatchers("/api/stats/..").hasAnyRole("ADMIN", "SUPER", "SUB")
+//
+//                        // 회원가입 및 로그인 관련 모든 요청에 대해 아무나 승인
+//                        .requestMatchers("/api/auth/**").permitAll()
+//
+//                        // 상품페이지
+//                        .requestMatchers("/api/products/**").authenticated()
+//
+//                        // 채팅
+//                        .requestMatchers("/ws-chat/**").authenticated()
+//
+//                        // 중복체크 관련 모든 요청에 대해 아무나 허용
+//                        .requestMatchers("/api/user/check/**").permitAll()
+//                        // 관리자 : 관리자 관련 모든 요청에 대해 승인된 사용자 중 ADMIN 권한이 있는 사용자만 허용
+//                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+//
 //                        // 회원가입 및 로그인 관련 모든 요청에 대해 아무나 승인
 //                        .requestMatchers("/api/auth/**").permitAll()
 //
@@ -83,10 +101,13 @@ public class WebSecurityConfig {
                                 .requestMatchers(HttpMethod.GET, "/api/comment/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/post/**").permitAll()
 
-                                // 6. [기존 유지] 기타 모든 /api 요청은 인증 필요
-                                .requestMatchers("/api/**").authenticated()
+                        // 카테고리 조회 일반 사용자 요청에 대해 승인
+                        .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
 
-                                // 그 외 나머지 모든 요청(정적 리소스 등)은 허용
+                        // 기타 모든 요청에 대해 승인된 사용자만 허용
+                        .requestMatchers("/api/**").authenticated()
+
+                        // 그 외 나머지 모든 요청(정적 리소스 등)은 허용
                                 .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)

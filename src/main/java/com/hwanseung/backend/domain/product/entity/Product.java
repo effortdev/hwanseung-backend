@@ -60,7 +60,7 @@ public class Product {
 
     @Builder.Default
     @Column(name = "sale_status", nullable = false, length = 20)
-    private String saleStatus = "SALE"; // 판매상태 SALE / SOLD_OUT / RESERVED
+    private String saleStatus = "SALE"; // 판매상태 SALE / SOLD_OUT
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -78,6 +78,8 @@ public class Product {
     @Column(name = "view_count", nullable = false)
     private int viewCount = 0;
 
+    @Column
+    private Integer reportCount;
 
     // 상품 1개 : 이미지 여러 개
     @Builder.Default

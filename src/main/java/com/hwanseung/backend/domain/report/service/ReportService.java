@@ -3,6 +3,7 @@ package com.hwanseung.backend.domain.report.service;
 import com.hwanseung.backend.domain.admin.entity.Report;
 import com.hwanseung.backend.domain.product.entity.Product;
 import com.hwanseung.backend.domain.product.repository.ProductRepository;
+import com.hwanseung.backend.domain.report.dto.ReportCheckResponseDTO;   // ✅추가
 import com.hwanseung.backend.domain.report.dto.ReportCreateRequestDTO;
 import com.hwanseung.backend.domain.report.dto.ReportCreateResponseDTO;
 import com.hwanseung.backend.domain.report.repository.ReportRepository;
@@ -30,6 +31,38 @@ public class ReportService {
             "COUNTERFEIT", "PROHIBITED", "OTHER"
     );
 
+    // 상세페이지 신고 버튼 누를 때 중복 신고 여부 확인
+    @Transactional(readOnly = true)
+    public ReportCheckResponseDTO checkProductReport(Long productId, Authentication authentication) {
+
+        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails loginUser)) {
+            throw new IllegalArgumentException("로그인이 필요합니다.");
+        }
+
+        Product product = productRepository.findById(productId.intValue())
+                .orElseThrow(() -> new IllegalArgumentException("상품 없음"));
+
+        User reporter = userRepository.findByUsername(loginUser.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("유저 없음"));
+
+        // 본인 상품 신고 금지
+        if (reporter.getUsername().equals(product.getSellerId())) {
+            return ReportCheckResponseDTO.of(true, "본인 상품은 신고할 수 없습니다.");
+        }
+
+        boolean reported = reportRepository.existsByTypeAndReporterIdAndTargetProductId(
+                "PRODUCT",
+                reporter.getId(),
+                productId
+        );
+
+        if (reported) {
+            return ReportCheckResponseDTO.of(true, "이미 신고한 상품입니다.");
+        }
+
+        return ReportCheckResponseDTO.of(false, "신고 가능한 상품입니다.");
+    }
+
     public ReportCreateResponseDTO createProductReport(
             Long productId,
             ReportCreateRequestDTO dto,
@@ -42,7 +75,12 @@ public class ReportService {
         }
 
         // 카테고리 검증
+        if (dto.getReasonCategory() == null || dto.getReasonCategory().trim().isEmpty()) {
+            throw new IllegalArgumentException("신고 유형을 선택하세요.");
+        }
+
         String category = dto.getReasonCategory().trim().toUpperCase();
+
         if (!VALID.contains(category)) {
             throw new IllegalArgumentException("잘못된 신고 유형입니다.");
         }

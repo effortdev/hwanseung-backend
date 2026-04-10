@@ -24,7 +24,7 @@ public class Notice {
     @Column(length = 5000)
     private String content;
 
-    private boolean pinned;
+    private Integer pinned;
 
     private LocalDateTime createdAt;
 }

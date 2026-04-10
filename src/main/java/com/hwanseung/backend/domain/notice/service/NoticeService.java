@@ -20,7 +20,7 @@ public class NoticeService {
     private final NoticeRepository noticeRepository;
 
     public Page<NoticeResponseDTO> getList(String keyword, Pageable pageable) {
-        return noticeRepository.findByTitleContaining(keyword, pageable)
+        return noticeRepository.findByTitleContainingOrderByPinnedDescCreatedAtDesc(keyword, pageable)
                 .map(this::toDTO);
     }
 
@@ -33,7 +33,7 @@ public class NoticeService {
                 .title(dto.getTitle())
                 .content(dto.getContent())
                 .createdAt(LocalDateTime.now())
-                .pinned(false)
+                .pinned(dto.getPinned())
                 .build());
     }
 
@@ -43,7 +43,7 @@ public class NoticeService {
                 .id(id)
                 .title(dto.getTitle())
                 .content(dto.getContent())
-                .pinned(notice.isPinned())
+                .pinned(notice.getPinned())
                 .createdAt(notice.getCreatedAt())
                 .build();
         noticeRepository.save(notice);
@@ -59,7 +59,7 @@ public class NoticeService {
                 .title(n.getTitle())
                 .content(n.getContent())
                 .createdAt(n.getCreatedAt())
-                .pinned(n.isPinned())
+                .pinned(n.getPinned())
                 .build();
     }
 }

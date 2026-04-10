@@ -16,5 +16,5 @@ public class NoticeResponseDTO {
     private String title;
     private String content;
     private LocalDateTime createdAt;
-    private boolean pinned;
+    private Integer pinned;
 }

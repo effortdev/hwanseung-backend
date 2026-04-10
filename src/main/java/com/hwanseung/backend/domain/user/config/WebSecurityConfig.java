@@ -87,6 +87,7 @@ public class WebSecurityConfig {
                                 .requestMatchers(HttpMethod.POST, "/api/products/**").authenticated()
                                 .requestMatchers(HttpMethod.PUT, "/api/products/**").authenticated()
                                 .requestMatchers(HttpMethod.DELETE, "/api/products/**").authenticated()
+                                .requestMatchers("/api/notices/**").authenticated()
 
                                 // 3. [추가] 이미지 및 정적 리소스 허용 (403 방지)
                                 // 실제 이미지 경로인 /api/imgs/** 를 허용 목록에 추가

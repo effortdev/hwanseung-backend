@@ -30,6 +30,7 @@ public class NoticeController {
 
     @PostMapping
     public void create(@RequestBody NoticeCreateRequestDTO dto) {
+        System.out.println("create 555: "+dto);
         noticeService.create(dto);
     }
 

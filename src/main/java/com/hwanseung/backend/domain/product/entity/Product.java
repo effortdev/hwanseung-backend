@@ -76,10 +76,10 @@ public class Product {
     // 🌟 [여기 추가!] DB의 view_count 컬럼과 매핑하고 기본값을 0으로 설정
     @Builder.Default
     @Column(name = "view_count", nullable = false)
-    private int viewCount = 0;
+    private int viewCount = 0; // 조회수
 
     @Column
-    private Integer reportCount;
+    private Integer reportCount; // 신고횟수
 
     // 상품 1개 : 이미지 여러 개
     @Builder.Default
@@ -147,6 +147,11 @@ public class Product {
     public void removeProductImage(ProductImage productImage) {
         this.productImages.remove(productImage);
         productImage.setProduct(null);
+    }
+
+    // 신고 횟수 추가
+    public void setReportCount(Integer reportCount) {
+        this.reportCount = reportCount;
     }
 
 }

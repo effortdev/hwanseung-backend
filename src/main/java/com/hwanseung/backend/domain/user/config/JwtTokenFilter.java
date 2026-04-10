@@ -1,6 +1,7 @@
 package com.hwanseung.backend.domain.user.config;
 
 // ... 기존 import 문들 ...
+import com.hwanseung.backend.domain.admin.controller.LoginManager;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -21,6 +22,7 @@ import java.io.IOException;
 public class JwtTokenFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService customUserDetailsService;
+    private final LoginManager loginManager;
 
 //    @Override
 //    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException, IOException {
@@ -45,6 +47,11 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                     UsernamePasswordAuthenticationToken authentication = getAuthenticationFromToken(accessToken);
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                    // [핵심] 유저 아이디와 해당 토큰의 만료 시간을 LoginManager에 기록
+                    // 토큰이 만료되면 자동으로 접속자 목록에서 제외됨
+                    long exp = jwtTokenProvider.getUserIdFromToken(accessToken); // 토큰의 exp claim 추출
+                    loginManager.updateActivity(authentication.getName(), exp);
                 } else {
                     // 🚨 [핵심] 토큰은 넘어왔는데 가짜(변조/만료)인 경우!
                     // 여기서 바로 401 에러를 세팅하고 쫓아냅니다!

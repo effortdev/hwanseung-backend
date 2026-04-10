@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface ReportRepository extends JpaRepository<Report, Long> {
+public interface AdminReportRepository extends JpaRepository<Report, Long> {
 
     /** 키워드 + 상태 + 유형 복합 검색 */
     @Query("SELECT r FROM Report r WHERE " +

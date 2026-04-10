@@ -3,7 +3,7 @@ package com.hwanseung.backend.domain.admin.service;
 import com.hwanseung.backend.domain.admin.controller.LoginManager;
 import com.hwanseung.backend.domain.admin.dto.StatisticsDTO.*;
 import com.hwanseung.backend.domain.admin.dto.Status;
-import com.hwanseung.backend.domain.admin.repository.ReportRepository;
+import com.hwanseung.backend.domain.admin.repository.AdminReportRepository;
 import com.hwanseung.backend.domain.admin.repository.SearchKeywordRepository;
 import com.hwanseung.backend.domain.product.repository.ProductRepository;
 import com.hwanseung.backend.domain.user.repository.UserRepository;
@@ -23,7 +23,7 @@ public class AdminStatisticsService {
     //    없는 경우 해당 Repository를 추가로 만들거나, 직접 쿼리를 작성하세요.
     private final UserRepository userRepository;           // 기존 User 엔티티 Repository
     private final ProductRepository productRepository;     // 기존 Product 엔티티 Repository
-    private final ReportRepository reportRepository;
+    private final AdminReportRepository reportRepository;
     private final SearchKeywordRepository searchKeywordRepository;
 
     // private final TransactionRepository transactionRepository;  // 거래 엔티티가 있다면

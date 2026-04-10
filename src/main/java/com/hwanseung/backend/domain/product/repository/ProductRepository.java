@@ -21,7 +21,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     List<Product> findBySellerIdOrderByCreatedAtDesc(String sellerId);
     //sellerId가져오기(product테이블)
 
-        //삭제된 데이터 확인 및 가리기
+    //삭제된 데이터 확인 및 가리기
     List<Product> findBySellerIdAndDeletedAtIsNullOrderByCreatedAtDesc(String sellerId);
 
     // 1. 전체 상품 개수 (기본 제공)
@@ -95,4 +95,6 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     List<Product> findNearbyProducts(@Param("userLat") double userLat,
                                      @Param("userLng") double userLng,
                                      @Param("radius") double radius);
+
+    void clearCategoryByCategoryId(Long id);
 }

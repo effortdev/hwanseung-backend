@@ -3,7 +3,7 @@ package com.hwanseung.backend.domain.admin.service;
 import com.hwanseung.backend.domain.admin.dto.ReportDTO.*;
 import com.hwanseung.backend.domain.admin.entity.Report;
 import com.hwanseung.backend.domain.admin.entity.ReportHistory;
-import com.hwanseung.backend.domain.admin.repository.ReportRepository;
+import com.hwanseung.backend.domain.admin.repository.AdminReportRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AdminReportService {
 
-    private final ReportRepository reportRepository;
+    private final AdminReportRepository reportRepository;
     // private final UserRepository userRepository;
     // private final ProductRepository productRepository;
 

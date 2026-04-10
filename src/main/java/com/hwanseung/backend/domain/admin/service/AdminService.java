@@ -32,15 +32,15 @@ public class AdminService {
         }
 
         return users.map(u -> new UserResponseDto(
-                u.getId(), u.getEmail(), u.getNickname(),
+                u.getId(), u.getUsername(), u.getNickname(),
                 u.getTrustScore(), u.getReportCount(), u.getStatus()
         ));
     }
 
     // 2번: 사용자 관리 - 상태 변경 (Soft Delete/Suspension)
     @Transactional
-    public void updateUserStatus(Long userId, String status) {
-        User user = userRepository.findById(userId)
+    public void updateUserStatus(Long id, String status) {
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 존재하지 않습니다."));
         user.setStatus( Status.valueOf(status)); // 유저 엔티티 내 상태 업데이트 로직
     }

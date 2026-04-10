@@ -66,6 +66,14 @@ public class ProductController {
         return ResponseEntity.ok(productDetail);
     }
 
+    // 메인페이지 인기 매물 조회
+    @GetMapping("/popular")
+    public ResponseEntity<List<ProductListResponseDTO>> getPopularProducts(Authentication authentication) {
+        String loginUserId = authentication != null ? authentication.getName() : null;
+        List<ProductListResponseDTO> popularProducts = productService.getPopularProducts(loginUserId);
+        return ResponseEntity.ok(popularProducts);
+    }
+
     @GetMapping("/count")
     public ResponseEntity<Map<String, Long>> getProductCount() {
         long count = productService.getTotalProductCount();
@@ -82,13 +90,13 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
-    // 상품 수정
-    @PutMapping("/{productId}")
+    // 상품 수정 multipart/form-data 로 받기
+    @PutMapping(value = "/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateProduct(
             @PathVariable Integer productId,
-            @RequestBody ProductUpdateRequestDTO requestDTO,
+            @ModelAttribute ProductUpdateRequestDTO requestDTO,
             Authentication authentication
-    ) {
+    ) throws IOException {
         productService.updateProduct(productId, requestDTO, authentication);
 
         return ResponseEntity.ok(Map.of(
@@ -121,6 +129,34 @@ public class ProductController {
 
         return ResponseEntity.ok(Map.of(
                 "message", "판매완료 처리되었습니다.",
+                "productId", productId
+        ));
+    }
+
+    // 예약중 처리
+    @PatchMapping("/{productId}/reserved")
+    public ResponseEntity<?> markProductAsReserved(
+            @PathVariable Integer productId,
+            Authentication authentication
+    ) {
+        productService.markProductAsReserved(productId, authentication);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "예약중 처리되었습니다.",
+                "productId", productId
+        ));
+    }
+
+    // 예약해제 -> 판매중
+    @PatchMapping("/{productId}/sale")
+    public ResponseEntity<?> markProductAsSale(
+            @PathVariable Integer productId,
+            Authentication authentication
+    ) {
+        productService.markProductAsSale(productId, authentication);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "판매중으로 변경되었습니다.",
                 "productId", productId
         ));
     }

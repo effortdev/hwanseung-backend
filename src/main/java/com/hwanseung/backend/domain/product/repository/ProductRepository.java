@@ -3,9 +3,12 @@ package com.hwanseung.backend.domain.product.repository;
 import com.hwanseung.backend.domain.product.entity.Product;
 import com.hwanseung.backend.domain.product.entity.ProductLike;
 import io.lettuce.core.dynamic.annotation.Param;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,11 +21,34 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     List<Product> findBySellerIdOrderByCreatedAtDesc(String sellerId);
     //sellerId가져오기(product테이블)
 
+        //삭제된 데이터 확인 및 가리기
+    List<Product> findBySellerIdAndDeletedAtIsNullOrderByCreatedAtDesc(String sellerId);
+
     // 1. 전체 상품 개수 (기본 제공)
     long count();
 
     // deleted_at 컬럼이 null인 데이터만 카운트
     long countByDeletedAtIsNull();
+
+    // ==========================================
+    long countByCreatedAtAfter(LocalDateTime dateTime);
+    long countByPriceLessThanEqual(int price);
+    long countByPriceBetween(int min, int max);
+    long countByPriceGreaterThan(int price);
+    long countByCategory(String category);
+
+    @Query("SELECT p.category, COUNT(p) FROM Product p GROUP BY p.category ORDER BY COUNT(p) DESC")
+    List<Object[]> countByCategory();
+
+    @Query("SELECT p FROM Product p WHERE " +
+            "(:keyword = '' OR p.title LIKE %:keyword% OR p.location LIKE %:keyword%) " +
+            "AND (:status = '' OR p.saleStatus = :status) " +
+            "AND (:category = '' OR p.category = :category)")
+    Page<Product> searchProducts(@Param("keyword") String keyword,
+                                 @Param("status") String status,
+                                 @Param("category") String category,
+                                 Pageable pageable);
+    // ==========================================
 
     // 판매중 먼저, 판매완료 아래, 그 안에서 최신순
     @Query("""
@@ -37,6 +63,16 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     // 삭제되지 않은 상품 단건 조회
     Optional<Product> findByProductIdAndDeletedAtIsNull(Integer productId);
+
+    // 메인페이지 인기 매물 후보
+    @Query("""
+        select p
+        from Product p
+        where p.deletedAt is null
+          and p.saleStatus = 'SALE'
+        order by p.createdAt desc
+    """)
+    List<Product> findAllVisibleSaleProductsOrderByCreatedAtDesc();
 
 
     // 🌟 내 주변 매물 찾기 쿼리 (Haversine 공식)

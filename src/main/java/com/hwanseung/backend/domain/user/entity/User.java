@@ -1,7 +1,9 @@
 package com.hwanseung.backend.domain.user.entity;
 
+import com.hwanseung.backend.domain.admin.dto.Status;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -11,6 +13,7 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @Setter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -23,13 +26,11 @@ public class User {
     @Column(name = "id")
     private Long id;
 
-    // 🌟 핵심 1: 이제 DB의 'username' 컬럼과 정직하게 연결합니다.
-    @Column(name = "username", nullable = false, length = 50, unique = true)
-    private String username; // 👈 이게 이제부터 진짜 로그인 아이디입니다!
+    @Column(nullable = false, length = 50, unique = true)
+    private String username; // 로그인 아이디 (인덱스 3)
 
-    // 🌟 핵심 2: 실명은 DB의 'name' 컬럼과 연결합니다.
-    @Column(name = "name", nullable = false, length = 50)
-    private String name; // 👈 사용자 실명
+    @Column(nullable = false, length = 50)
+    private String name; // 사용자 이름 (실명 등)
 
     @Column(nullable = false, length = 100)
     private String password;
@@ -72,6 +73,16 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Auth auth;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", columnDefinition = "ENUM('ACTIVE', 'SUSPENDED', 'SECESSION') DEFAULT 'ACTIVE'")
+    private Status status = Status.ACTIVE;
+
+    @Column
+    private Integer trustScore;
+
+    @Column
+    private Integer reportCount;
+
     @Column(name = "neighborhood", length = 50)
     private String neighborhood;
 
@@ -86,10 +97,16 @@ public class User {
     @Column(name = "profile_original_name")
     private String profileOriginalName;
 
+    @Column
+    private LocalDateTime suspendedAt;
+
+    @Column
+    private LocalDateTime suspendUntil;
+
     @Builder
     public User(String email, String contact, String username, String password, Role role,
                 String name, String nickname, String birthday, String gender,
-                String zipCode, String address, String detailAddress) {
+                String zipCode, String address, String detailAddress,Status status) {
         this.email = email;
         this.contact = contact;
         this.username = username;
@@ -102,6 +119,8 @@ public class User {
         this.zipCode = zipCode;
         this.address = address;
         this.detailAddress = detailAddress;
+//        this.status =  status;
+        this.status = (status != null) ? status : Status.ACTIVE;
 
     }
 
@@ -109,6 +128,10 @@ public class User {
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void withdraw() { //회원탈퇴
+        this.status = Status.SECESSION;
     }
 
 }

@@ -73,7 +73,7 @@ public class AdminProductDTO {
         private long total;
         private long sale;
         private long soldOut;
-        private long pending;
+        private long reserved;
         private long hidden;
     }
 }

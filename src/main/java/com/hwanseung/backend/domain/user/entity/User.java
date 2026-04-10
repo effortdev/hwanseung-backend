@@ -78,7 +78,8 @@ public class User {
     private Status status = Status.ACTIVE;
 
     @Column
-    private Integer trustScore;
+    @Builder.Default
+    private Integer trustScore = 0;
 
     @Column
     private Integer reportCount;

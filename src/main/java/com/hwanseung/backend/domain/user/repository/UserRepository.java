@@ -31,8 +31,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 검색어(이메일 또는 닉네임)를 포함한 페이징 조회
     Page<User> findByEmailContainingOrNicknameContaining(String email, String nickname, Pageable pageable);
 
-    // 검색어(이메일 또는 닉네임)를 포함한 페이징 조회
-    Page<User> findByEmailContainingOrNicknameContaining(String email, String nickname, Pageable pageable);
 
     @Modifying
     @Query("UPDATE User u SET u.nickname = :#{#dto.nickname}, u.email = :#{#dto.email}, " +

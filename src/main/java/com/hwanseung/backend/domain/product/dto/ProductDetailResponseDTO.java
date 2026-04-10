@@ -4,6 +4,7 @@ import com.hwanseung.backend.domain.product.entity.Product;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -16,6 +17,7 @@ public class ProductDetailResponseDTO {
     private int price;
     private String location;
     private String content;
+    private LocalDateTime createdAt;
     private String sellerId;
     private String sellerNickname;
     private String saleStatus;
@@ -30,6 +32,7 @@ public class ProductDetailResponseDTO {
                 .price(product.getPrice())
                 .location(product.getLocation())
                 .content(product.getContent())
+                .createdAt(product.getCreatedAt())
                 .sellerId(product.getSellerId())
                 .sellerNickname(product.getSellerNickname())
                 .saleStatus(product.getSaleStatus())

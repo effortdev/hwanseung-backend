@@ -4,7 +4,8 @@ public enum Status {
     ACTIVE("ACTIVE"),
     SUSPENDED("SUSPENDED"),
     SECESSION("SECESSION"),
-    BLOCKED("BLOCKED");
+    BLOCKED("BLOCKED"),
+    PENDING("PENDING");
 
     private String status;
 

@@ -18,4 +18,5 @@ public interface AuthRepository extends JpaRepository<Auth, Long> {
     @Query("DELETE FROM Auth a WHERE a.user.id = :userId")
     void deleteByUserId(Long userId);
 
+    Optional<Auth> findByUser(User user);
 }

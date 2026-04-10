@@ -1,14 +1,13 @@
 package com.hwanseung.backend.domain.user.entity;
 
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
+@Builder
 @Entity
 public class Auth{
     @Id
@@ -28,11 +27,11 @@ public class Auth{
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Builder
-    public Auth(User user, String tokenType, String accessToken, String refreshToken) {
-        this.user = user;
-        this.tokenType = tokenType;
-        this.accessToken = accessToken;
-        this.refreshToken = refreshToken;
-    }
+//    @Builder
+//    public Auth(User user, String tokenType, String accessToken, String refreshToken) {
+//        this.user = user;
+//        this.tokenType = tokenType;
+//        this.accessToken = accessToken;
+//        this.refreshToken = refreshToken;
+
 }

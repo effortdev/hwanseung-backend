@@ -73,8 +73,9 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Auth auth;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", columnDefinition = "ENUM('ACTIVE', 'SUSPENDED', 'SECESSION') DEFAULT 'ACTIVE'")
+    @Column(name = "status", columnDefinition = "ENUM('ACTIVE', 'SUSPENDED', 'SECESSION', 'PENDING') DEFAULT 'ACTIVE'")
     private Status status = Status.ACTIVE;
 
     @Column
@@ -88,6 +89,7 @@ public class User {
 
     // MySQL의 TINYINT(1)은 Java의 boolean과 완벽하게 1:1로 매칭됩니다.
     // columnDefinition = "tinyint(1) default 0" 옵션을 주면 DB와 동기화하기 좋습니다.
+    @Builder.Default
     @Column(name = "is_neighborhood_authenticated", nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
     private boolean isNeighborhoodAuthenticated = false;
 
@@ -103,32 +105,38 @@ public class User {
     @Column
     private LocalDateTime suspendUntil;
 
-    @Builder
-    public User(String email, String contact, String username, String password, Role role,
-                String name, String nickname, String birthday, String gender,
-                String zipCode, String address, String detailAddress,Status status) {
-        this.email = email;
-        this.contact = contact;
-        this.username = username;
-        this.password = password;
-        this.role = role;
-        this.name = name;
-        this.nickname = nickname;
-        this.birthday = birthday;
-        this.gender = gender;
-        this.zipCode = zipCode;
-        this.address = address;
-        this.detailAddress = detailAddress;
-//        this.status =  status;
-        this.status = (status != null) ? status : Status.ACTIVE;
+    @Builder.Default
+    @Column(length = 20)
+    private String provider = "LOCAL"; // LOCAL, GOOGLE, KAKAO
 
-    }
+    @Column(name = "provider_id", unique = true)
+    private String providerId; // 소셜 서버의 고유 ID
 
-    @PrePersist
-    public void prePersist() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
+//    @Builder
+//    public User(String email, String contact, String username, String password, Role role,
+//                String name, String nickname, String birthday, String gender,
+//                String zipCode, String address, String detailAddress,Status status) {
+//        this.email = email;
+//        this.contact = contact;
+//        this.username = username;
+//        this.password = password;
+//        this.role = role;
+//        this.name = name;
+//        this.nickname = nickname;
+//        this.birthday = birthday;
+//        this.gender = gender;
+//        this.zipCode = zipCode;
+//        this.address = address;
+//        this.detailAddress = detailAddress;
+//        this.status = (status != null) ? status : Status.ACTIVE;
+//
+//    }
+
+//    @PrePersist
+//    public void prePersist() {
+//        this.createdAt = LocalDateTime.now();
+//        this.updatedAt = LocalDateTime.now();
+//    }
 
     public void withdraw() { //회원탈퇴
         this.status = Status.SECESSION;

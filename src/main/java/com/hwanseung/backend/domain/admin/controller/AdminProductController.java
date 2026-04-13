@@ -20,9 +20,9 @@ public class AdminProductController {
     public ResponseEntity<Map<String, Object>> getProducts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "") String keyword,
-            @RequestParam(defaultValue = "") String status,
-            @RequestParam(defaultValue = "") String category,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String category,
             @RequestParam(defaultValue = "latest") String sort) {
         return ResponseEntity.ok(productService.getProducts(page, size, keyword, status, category, sort));
     }

@@ -39,9 +39,10 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     List<Object[]> countByCategory();
 
     @Query("SELECT p FROM Product p WHERE " +
-            "(:keyword IS NULL OR :keyword = '' OR p.title LIKE CONCAT('%', :keyword, '%') OR p.location LIKE CONCAT('%', :keyword, '%')) " +
-            "AND (:status IS NULL OR :status = '' OR p.saleStatus = :status) " +
-            "AND (:category IS NULL OR :category = '' OR p.category = :category)")
+            "p.deletedAt IS NULL " + // Soft Delete된 데이터 목록에서 제외
+            "AND (:keyword IS NULL OR p.title LIKE %:keyword% OR p.location LIKE %:keyword%) " +
+            "AND (:status IS NULL OR p.saleStatus = :status) " +
+            "AND (:category IS NULL OR p.category = :category)")
     Page<Product> searchProducts(@Param("keyword") String keyword,
                                  @Param("status") String status,
                                  @Param("category") String category,

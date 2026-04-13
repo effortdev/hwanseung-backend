@@ -50,7 +50,8 @@ public class WebConfig implements WebMvcConfigurer {
                         "http://localhost:3000",
                         "http://127.0.0.1:3000",
                         "http://localhost:5173",
-                        "http://127.0.0.1:5173"
+                        "http://127.0.0.1:5173",
+                        "https://hsmarket.duckdns.org"
                 )
                 .allowCredentials(true) // 중요!
                 .allowedMethods("*");

@@ -4,7 +4,6 @@ import com.hwanseung.backend.domain.product.dto.ProductCreateRequestDTO;
 import com.hwanseung.backend.domain.product.dto.ProductDetailResponseDTO;
 import com.hwanseung.backend.domain.product.dto.ProductListResponseDTO;
 import com.hwanseung.backend.domain.product.dto.ProductUpdateRequestDTO;
-import com.hwanseung.backend.domain.product.entity.Product;
 import com.hwanseung.backend.domain.product.service.ProductService;
 import com.hwanseung.backend.domain.user.config.CustomUserDetails;
 import lombok.RequiredArgsConstructor;

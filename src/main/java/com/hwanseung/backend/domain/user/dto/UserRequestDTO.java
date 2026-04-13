@@ -3,7 +3,6 @@ package com.hwanseung.backend.domain.user.dto;
 import com.hwanseung.backend.domain.admin.dto.Status;
 import com.hwanseung.backend.domain.user.entity.Role;
 import com.hwanseung.backend.domain.user.entity.User;
-import jakarta.persistence.Column;
 import lombok.*;
 import org.springframework.util.StringUtils;
 

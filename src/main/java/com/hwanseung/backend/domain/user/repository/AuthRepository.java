@@ -12,6 +12,7 @@ import java.util.Optional;
 public interface AuthRepository extends JpaRepository<Auth, Long> {
     Boolean existsByUser(User user);
     Optional<Auth> findByRefreshToken(String refreshToken);
+    Optional<Auth> findByUserId(Long userId);
 
     @Modifying // 🌟 DB의 데이터를 변경/삭제할 때 반드시 필요
     @Transactional

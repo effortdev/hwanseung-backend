@@ -11,6 +11,7 @@ public class AuthResponseDTO {
     private String tokenType;
     private String accessToken;
     private String refreshToken;
+    private String username;
     private String status;
 
     @Builder

@@ -7,6 +7,8 @@ import org.hibernate.annotations.ColumnDefault;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import com.hwanseung.backend.domain.admin.dto.Status;
+import com.hwanseung.backend.domain.user.entity.Role;
 
 import java.time.LocalDateTime;
 

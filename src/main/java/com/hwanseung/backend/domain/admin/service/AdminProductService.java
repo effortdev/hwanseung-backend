@@ -45,6 +45,10 @@ public class AdminProductService {
     @Transactional(readOnly = true)
     public Map<String, Object> getProducts(int page, int size, String keyword,
                                            String status, String category, String sort) {
+        // 빈 문자열을 null로 변환하여 JPA 에러 방지
+        String safeKeyword = (keyword == null || keyword.trim().isEmpty()) ? null : keyword.trim();
+        String safeStatus = (status == null || status.trim().isEmpty()) ? null : status.trim();
+        String safeCategory = (category == null || category.trim().isEmpty()) ? null : category.trim();
         // TODO: 실제 ProductRepository로 교체
         // Sort 처리
          Sort sorting = switch (sort) {
@@ -63,14 +67,15 @@ public class AdminProductService {
                     : null;
 
             return AdminProductDTO.ListResponse.builder()
-                    .productId(Long.valueOf(p.getProductId()))
+                    // Number를 통해 ID 타입(Integer/Long) 상관없이 안전하게 변환
+                    .productId(p.getProductId() != null ? Long.valueOf(p.getProductId().toString()) : null)
                     .title(p.getTitle())
                     .category(p.getCategory())
                     .price(p.getPrice())
                     .location(p.getLocation())
                     .sellerNickname(p.getSellerNickname())
                     .saleStatus(p.getSaleStatus())
-                    .reportCount(p.getReportCount())
+                    .reportCount(p.getReportCount() != null ? p.getReportCount() : 0) // Null 방어 로직
                     .createdAt(p.getCreatedAt())
                     .thumbnailUrl(thumb)
                     .build();

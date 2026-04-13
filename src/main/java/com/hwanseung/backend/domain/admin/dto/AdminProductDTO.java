@@ -13,12 +13,12 @@ public class AdminProductDTO {
         private Long productId;
         private String title;
         private String category;
-        private int price;
+        private Integer price;
         private String location;
         private String sellerNickname;
         private String saleStatus;
         private String thumbnailUrl;
-        private int reportCount;
+        private Integer reportCount;
         private LocalDateTime createdAt;
     }
 
@@ -29,14 +29,14 @@ public class AdminProductDTO {
         private String title;
         private String content;
         private String category;
-        private int price;
+        private Integer price;
         private String location;
         private String sellerId;
         private String sellerNickname;
         private String saleStatus;
         private String thumbnailUrl;
         private List<ProductImageDTO> productImages;
-        private int reportCount;
+        private Integer reportCount;
         private String rejectReason;
         private String hideReason;
         private List<ProductReportDTO> reports;

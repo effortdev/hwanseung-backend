@@ -22,17 +22,19 @@ public class AdminService {
         Page<User> users;
         if (keyword == null || keyword.isBlank()) {
             users = userRepository.findAll(pageable);
-            System.out.println("555555");
-            System.out.println(users);
         } else {
             users = userRepository.findByEmailContainingOrNicknameContaining(keyword, keyword, pageable);
-            System.out.println("66666");
-            System.out.println(users);
         }
 
         return users.map(u -> new UserResponseDto(
-                u.getId(), u.getUsername(), u.getNickname(),
-                u.getTrustScore(), u.getReportCount(), u.getStatus()
+                u.getId(),
+                u.getUsername(),
+                u.getNickname(),
+                // 💡 Null 방어 로직 (엔티티가 Integer 타입일 경우 대비)
+                // 만약 User 엔티티에서 해당 필드가 원시타입 'int'라면 단순히 u.getTrustScore() 로 수정하세요.
+                u.getTrustScore() == null ? 0 : u.getTrustScore(),
+                u.getReportCount() == null ? 0 : u.getReportCount(),
+                u.getStatus()
         ));
     }
 

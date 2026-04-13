@@ -15,7 +15,7 @@ import java.util.Map;
 
 @RequiredArgsConstructor
 @RestController
-@CrossOrigin(origins = "http://localhost:5173")
+//@CrossOrigin(origins = "http://localhost:5173")
 public class AuthRestController {
     private final AuthService authService;
     private final UserService userService;

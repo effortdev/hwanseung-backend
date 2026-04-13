@@ -4,7 +4,6 @@ package com.hwanseung.backend.domain.admin.controller;
 import com.hwanseung.backend.domain.admin.dto.UserResponseDto;
 import com.hwanseung.backend.domain.admin.dto.UserStatusRequest;
 import com.hwanseung.backend.domain.admin.service.AdminService;
-import com.hwanseung.backend.domain.user.dto.UserResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

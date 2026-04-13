@@ -4,7 +4,6 @@ package com.hwanseung.backend.domain.admin.controller;
 import com.hwanseung.backend.domain.admin.dto.UserResponseDto;
 import com.hwanseung.backend.domain.admin.dto.UserStatusRequest;
 import com.hwanseung.backend.domain.admin.service.AdminService;
-import com.hwanseung.backend.domain.user.dto.UserResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,9 +23,10 @@ public class AdminController {
     public ResponseEntity<Page<UserResponseDto>> getUserList(
             @RequestParam(required = false) String keyword,
             @PageableDefault(page = 0, size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
-        System.out.println(adminService.getUserList(keyword, pageable));
 
-        return ResponseEntity.ok(adminService.getUserList(keyword, pageable));
+        // 1번만 호출되도록 변수에 할당 (이중 쿼리 실행 방지)
+        Page<UserResponseDto> response = adminService.getUserList(keyword, pageable);
+        return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/admin/users/{id}/status")

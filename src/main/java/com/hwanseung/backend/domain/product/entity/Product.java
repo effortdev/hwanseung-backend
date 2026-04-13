@@ -78,8 +78,9 @@ public class Product {
     @Column(name = "view_count", nullable = false)
     private int viewCount = 0; // 조회수
 
-    @Column
-    private Integer reportCount; // 신고횟수
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer reportCount = 0;
 
     // 상품 1개 : 이미지 여러 개
     @Builder.Default

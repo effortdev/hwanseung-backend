@@ -1,15 +1,22 @@
 package com.hwanseung.backend.domain.admin.service;
 
-import com.hwanseung.backend.domain.admin.dto.AdminProductDTO.DetailResponse;
+import com.hwanseung.backend.domain.admin.dto.AdminProductDTO;
 import com.hwanseung.backend.domain.admin.dto.AdminProductDTO.SummaryCount;
+import com.hwanseung.backend.domain.product.entity.Product;
+import com.hwanseung.backend.domain.product.repository.ProductImageRepository;
+import com.hwanseung.backend.domain.product.repository.ProductRepository;
+import com.hwanseung.backend.domain.report.repository.ReportRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -17,9 +24,9 @@ public class AdminProductService {
 
     // ※ 기존 프로젝트의 Product, ProductImage, ProductRepository 등을 주입받습니다.
     //    아래는 인터페이스 구조만 정의합니다.
-    // private final ProductRepository productRepository;
-    // private final ProductImageRepository productImageRepository;
-    // private final ReportRepository reportRepository;
+     private final ProductRepository productRepository;
+     private final ProductImageRepository productImageRepository;
+     private final ReportRepository reportRepository;
 
     /**
      * 상품 목록 조회 (검색 + 필터 + 정렬 + 페이지네이션)
@@ -38,38 +45,56 @@ public class AdminProductService {
     @Transactional(readOnly = true)
     public Map<String, Object> getProducts(int page, int size, String keyword,
                                            String status, String category, String sort) {
+        // 빈 문자열을 null로 변환하여 JPA 에러 방지
+        String safeKeyword = (keyword == null || keyword.trim().isEmpty()) ? null : keyword.trim();
+        String safeStatus = (status == null || status.trim().isEmpty()) ? null : status.trim();
+        String safeCategory = (category == null || category.trim().isEmpty()) ? null : category.trim();
         // TODO: 실제 ProductRepository로 교체
         // Sort 처리
-//         Sort sorting = switch (sort) {
-//             case "oldest" -> Sort.by("createdAt").ascending();
-//             case "priceAsc" -> Sort.by("price").ascending();
-//             case "priceDesc" -> Sort.by("price").descending();
-//             case "reportDesc" -> Sort.by("reportCount").descending();
-//             default -> Sort.by("createdAt").descending();
-//         };
-//         Page<Product> result = productRepository.searchProducts(keyword, status, category, PageRequest.of(page, size, sorting));
+         Sort sorting = switch (sort) {
+             case "oldest" -> Sort.by("createdAt").ascending();
+             case "priceAsc" -> Sort.by("price").ascending();
+             case "priceDesc" -> Sort.by("price").descending();
+             case "reportDesc" -> Sort.by("reportCount").descending();
+             default -> Sort.by("createdAt").descending();
+         };
+         Page<Product> result = productRepository.searchProducts(keyword, status, category, PageRequest.of(page, size, sorting));
+
+// 🌟 수정 포인트: Entity -> DTO 변환 (무한 참조 방지 및 thumbnailUrl 세팅)
+        List<AdminProductDTO.ListResponse> dtoList = result.getContent().stream().map(p -> {
+            String thumb = (p.getProductImages() != null && !p.getProductImages().isEmpty())
+                    ? p.getProductImages().get(0).getImagePath() // 이미지 경로 필드명에 맞게 수정 필요
+                    : null;
+
+            return AdminProductDTO.ListResponse.builder()
+                    // Number를 통해 ID 타입(Integer/Long) 상관없이 안전하게 변환
+                    .productId(p.getProductId() != null ? Long.valueOf(p.getProductId().toString()) : null)
+                    .title(p.getTitle())
+                    .category(p.getCategory())
+                    .price(p.getPrice())
+                    .location(p.getLocation())
+                    .sellerNickname(p.getSellerNickname())
+                    .saleStatus(p.getSaleStatus())
+                    .reportCount(p.getReportCount() != null ? p.getReportCount() : 0) // Null 방어 로직
+                    .createdAt(p.getCreatedAt())
+                    .thumbnailUrl(thumb)
+                    .build();
+        }).collect(Collectors.toList());
 
         // 요약 카운트
         SummaryCount summary = SummaryCount.builder()
-                .total(0)
-                .sale(0)
-                .soldOut(0)
-                .pending(0)
-                .hidden(0)
+                .total(productRepository.countByDeletedAtIsNull()) // 삭제된 항목 제외 권장
+                .sale(productRepository.countBySaleStatusAndDeletedAtIsNull("SALE"))
+                .soldOut(productRepository.countBySaleStatusAndDeletedAtIsNull("SOLD_OUT"))
+                .reserved(productRepository.countBySaleStatusAndDeletedAtIsNull("RESERVED"))
+                .hidden(productRepository.countBySaleStatusAndDeletedAtIsNull("HIDDEN"))
                 .build();
 
         Map<String, Object> response = new HashMap<>();
-        response.put("content", List.of());
-        response.put("totalPages", 0);
+        response.put("content", dtoList); // Entity 대신 DTO 리스트 반환
+        response.put("totalPages", result.getTotalPages());
         response.put("summary", summary);
         return response;
-    }
-
-    /** 상품 상세 조회 */
-    @Transactional(readOnly = true)
-    public DetailResponse getProductDetail(Long productId) {
-        // TODO: 실제 Product 엔티티에서 조회 후 DetailResponse로 변환
-        throw new NoSuchElementException("상품을 찾을 수 없습니다. ID: " + productId);
     }
 
     /** 상품 승인 */
@@ -95,11 +120,11 @@ public class AdminProductService {
     /** 상품 숨김 */
     @Transactional
     public void hideProduct(Long productId, String reason) {
-        // Product product = productRepository.findById(productId)
-        //         .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다."));
-        // product.setSaleStatus("HIDDEN");
-        // product.setHideReason(reason);
-        // productRepository.save(product);
+//         Product product = productRepository.findById(Math.toIntExact(productId))
+//                 .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다."));
+//         product.setSaleStatus("HIDDEN");
+//         product.setHideReason(reason);
+//         productRepository.save(product);
     }
 
     /** 상품 숨김 해제 */
@@ -127,6 +152,9 @@ public class AdminProductService {
     /** 일괄 삭제 */
     @Transactional
     public void bulkDelete(List<Long> productIds) {
-        // productRepository.deleteAllByIdInBatch(productIds);
+//         productRepository.deleteAllByIdInBatch(productIds);
     }
+
+//    public DetailResponse getProductDetail(Long productId) {
+//    }
 }

@@ -4,6 +4,7 @@ import com.hwanseung.backend.domain.admin.dto.CategoryDTO.Request;
 import com.hwanseung.backend.domain.admin.dto.CategoryDTO.Response;
 import com.hwanseung.backend.domain.admin.entity.Category;
 import com.hwanseung.backend.domain.admin.repository.CategoryRepository;
+import com.hwanseung.backend.domain.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +18,7 @@ import java.util.stream.Collectors;
 public class AdminCategoryService {
 
     private final CategoryRepository categoryRepository;
-    // private final ProductRepository productRepository;  // 상품 수 카운트용
+     private final ProductRepository productRepository;  // 상품 수 카운트용
 
     /** 전체 목록 조회 (정렬순) */
     @Transactional(readOnly = true)
@@ -73,7 +74,7 @@ public class AdminCategoryService {
             throw new NoSuchElementException("카테고리를 찾을 수 없습니다.");
         }
         // TODO: 해당 카테고리에 속한 상품 처리 (카테고리 초기화 등)
-        // productRepository.clearCategoryByCategoryId(id);
+//        productRepository.clearCategoryByCategoryId(id);
         categoryRepository.deleteById(id);
     }
 
@@ -101,8 +102,8 @@ public class AdminCategoryService {
 
     private Response toResponse(Category c) {
         // TODO: 실제 상품 수 카운트
-        // long productCount = productRepository.countByCategory(c.getCategoryKey());
-        long productCount = 0;
+        long productCount = productRepository.countByCategory(c.getCategoryKey());
+//        long productCount = 0;
 
         return Response.builder()
                 .id(c.getId())

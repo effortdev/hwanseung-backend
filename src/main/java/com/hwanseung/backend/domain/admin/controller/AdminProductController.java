@@ -20,18 +20,18 @@ public class AdminProductController {
     public ResponseEntity<Map<String, Object>> getProducts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "") String keyword,
-            @RequestParam(defaultValue = "") String status,
-            @RequestParam(defaultValue = "") String category,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String category,
             @RequestParam(defaultValue = "latest") String sort) {
         return ResponseEntity.ok(productService.getProducts(page, size, keyword, status, category, sort));
     }
 
     /** 상품 상세 조회 */
-    @GetMapping("/{productId}")
-    public ResponseEntity<DetailResponse> getProductDetail(@PathVariable Long productId) {
-        return ResponseEntity.ok(productService.getProductDetail(productId));
-    }
+//    @GetMapping("/{productId}")
+//    public ResponseEntity<DetailResponse> getProductDetail(@PathVariable Long productId) {
+//        return ResponseEntity.ok(productService.getProductDetail(productId));
+//    }
 
     /** 상품 승인 */
     @PatchMapping("/{productId}/approve")

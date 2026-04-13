@@ -11,6 +11,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import com.hwanseung.backend.domain.user.config.CustomUserDetails;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerInterceptor;
 
 @Configuration
 @EnableWebSecurity
@@ -78,6 +85,7 @@ public class WebSecurityConfig {
                                 // 1. [기존 유지] 관리자 및 인증 관련
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                                 .requestMatchers("/api/auth/**").permitAll()
+                                .requestMatchers("/api/user/social-signup-extra").authenticated()
                                 .requestMatchers("/api/user/check/**").permitAll()
 
                                 // 2. [수정/추가] 상품 페이지 관련

@@ -1,5 +1,6 @@
 package com.hwanseung.backend.domain.user.config;
 
+import com.hwanseung.backend.domain.admin.dto.Status;
 import com.hwanseung.backend.domain.user.entity.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -75,5 +76,9 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    public Status getStatus() {
+        return user.getStatus(); // 엔티티의 status 필드값을 리턴
     }
 }

@@ -6,6 +6,7 @@ import com.hwanseung.backend.domain.user.config.JwtTokenProvider;
 import com.hwanseung.backend.domain.user.entity.Auth;
 import com.hwanseung.backend.domain.user.entity.Role;
 import com.hwanseung.backend.domain.user.entity.User;
+import com.hwanseung.backend.domain.admin.dto.Status;
 import com.hwanseung.backend.domain.user.dto.AuthRequestDTO;
 import com.hwanseung.backend.domain.user.dto.AuthResponseDTO;
 import com.hwanseung.backend.domain.user.dto.UserRequestDTO;
@@ -16,10 +17,18 @@ import com.hwanseung.backend.domain.user.dto.PayBalance;
 import com.hwanseung.backend.domain.user.controller.PayBalanceRepository;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
+import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +40,8 @@ public class AuthService {
     private final SmsService smsService;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
-
+    @Value("${google.client.id}")
+    private String googleClientId;
     /** 이메일 인증 요청 로직 */
     public void requestEmailVerification(String email) {
         if (userRepository.existsByEmail(email)) {
@@ -64,6 +74,11 @@ public class AuthService {
         System.out.println(requestDto);
         User user = this.userRepository.findByUsername(requestDto.getUsername()).orElseThrow(
                 () -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다. username = " + requestDto.getUsername()));
+
+        // 🌟 PENDING 상태라면 로그인을 막고 추가 인증 유도
+        if (user.getStatus() == com.hwanseung.backend.domain.admin.dto.Status.PENDING) {
+            throw new IllegalArgumentException("추가 정보 입력(연락처 인증)이 완료되지 않은 계정입니다.");
+        }
 
         if (user.getStatus() == null || !"ACTIVE".equals(user.getStatus().name())) {
             throw new IllegalArgumentException("탈퇴하거나 정지된 계정입니다.");
@@ -132,4 +147,86 @@ public class AuthService {
         // IN THIS CASE, USER HAVE TO LOGIN AGAIN, SO REGENERATE IS NOT APPROPRIATE
         return null;
     }
+
+    /** 구글 소셜 회원가입 */
+    @Transactional
+    public AuthResponseDTO googleLogin(String idTokenString) throws Exception {
+        // 1. 구글 토큰 검증 (기존 동일)
+        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+                .setAudience(Collections.singletonList(googleClientId))
+                .build();
+
+        GoogleIdToken idToken = verifier.verify(idTokenString);
+        if (idToken == null) throw new IllegalArgumentException("유효하지 않은 구글 토큰입니다.");
+
+        Payload payload = idToken.getPayload();
+        String email = payload.getEmail();
+        String name = (String) payload.get("name");
+        String googleId = payload.getSubject();
+
+        // 2. 유저 조회 또는 신규 등록
+        User user = userRepository.findByEmail(email)
+                .orElseGet(() -> {
+                    // ✨ 신규 가입 시 status를 PENDING으로 설정
+                    User newUser = User.builder()
+                            .username("google_" + googleId.substring(0, 10))
+                            .name(name)
+                            .nickname("구글사용자_" + googleId.substring(0, 5))
+                            .email(email)
+                            .password(passwordEncoder.encode("SOCIAL_AUTH_PWD_" + googleId))
+                            .provider("GOOGLE")
+                            .providerId(googleId)
+                            .role(Role.ROLE_USER)
+                            .status(Status.PENDING) // 🌟 여기서 PENDING 설정
+                            .build();
+
+                    User savedUser = userRepository.save(newUser);
+
+                    // 지갑 생성 (기존 동일)
+                    PayBalance newBalance = new PayBalance();
+                    newBalance.setUserId(String.valueOf(savedUser.getId()));
+                    newBalance.setHwanseungPay(0);
+                    payBalanceRepository.save(newBalance);
+
+                    return savedUser;
+                });
+
+        // 3. 토큰 생성 및 Auth 저장 (기존 동일)
+        String accessToken = jwtTokenProvider.generateAccessToken(
+                new UsernamePasswordAuthenticationToken(new CustomUserDetails(user), user.getPassword()));
+        String refreshToken = jwtTokenProvider.generateRefreshToken(
+                new UsernamePasswordAuthenticationToken(new CustomUserDetails(user), user.getPassword()));
+
+        Auth auth = authRepository.findByUser(user)
+                .map(existingAuth -> {
+                    existingAuth.setAccessToken(accessToken);
+                    existingAuth.setRefreshToken(refreshToken);
+                    return authRepository.save(existingAuth);
+                })
+                .orElseGet(() -> authRepository.save(Auth.builder()
+                        .user(user)
+                        .tokenType("Bearer")
+                        .accessToken(accessToken)
+                        .refreshToken(refreshToken)
+                        .build()));
+
+        // 🌟 프론트엔드에서 status를 확인할 수 있도록 AuthResponseDTO에 상태값을 포함시켜야 합니다.
+        return new AuthResponseDTO(auth);
+    }
+
+//    /** 소셜 가입자 추가 정보 입력 및 활성화 */
+//    @Transactional
+//    public void completeSocialSignup(Long userId, String username, String nickname, String contact) {
+//        User user = userRepository.findById(userId)
+//                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+//
+//        // 1. 정보 업데이트
+//        user.updateSocialInfo(username, nickname, contact); // User 엔티티에 업데이트 메서드 구현 권장
+//
+//        // 2. 상태 변경
+//        user.setStatus(com.hwanseung.backend.domain.admin.dto.Status.ACTIVE);
+//
+//        userRepository.save(user);
+//    }
+
 }

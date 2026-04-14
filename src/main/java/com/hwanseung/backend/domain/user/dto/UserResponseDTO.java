@@ -1,15 +1,12 @@
 package com.hwanseung.backend.domain.user.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.hwanseung.backend.domain.user.entity.User;
 import lombok.Data;
-
-import java.time.LocalDateTime;
 
 @Data
 public class UserResponseDTO {
     private Long id;
-    private String name;
+    private String userid;
     private String username;
     private String nickname;
     private String birthday;
@@ -20,16 +17,10 @@ public class UserResponseDTO {
     private String address;
     private String detailAddress;
     private String role;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "Asia/Seoul")
-    private LocalDateTime createdAt;
-    private String profileImagePath;
-    private String profileOriginalName;
-    private String status;
-    private String provider;
 
     public UserResponseDTO(User entity) {
         this.id = entity.getId();
-        this.name = entity.getName();
+        this.userid = entity.getUserid();
         this.username = entity.getUsername();
         this.nickname = entity.getNickname();
         this.birthday = entity.getBirthday();
@@ -40,10 +31,5 @@ public class UserResponseDTO {
         this.address = entity.getAddress();
         this.detailAddress = entity.getDetailAddress();
         this.role = entity.getRole() != null ? entity.getRole().name() : null;
-        this.createdAt = entity.getCreatedAt();
-        this.profileImagePath = entity.getProfileImagePath();
-        this.profileOriginalName = entity.getProfileOriginalName();
-        this.status = entity.getStatus().name();
-        this.provider = entity.getProvider();
     }
 }

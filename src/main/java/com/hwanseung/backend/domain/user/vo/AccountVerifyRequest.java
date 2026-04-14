@@ -1,4 +1,4 @@
-package com.hwanseung.backend.domain.user.dto;
+package com.hwanseung.backend.domain.user.vo;
 import lombok.Data;
 
 @Data

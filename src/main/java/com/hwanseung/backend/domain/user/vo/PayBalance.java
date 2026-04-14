@@ -1,4 +1,4 @@
-package com.hwanseung.backend.domain.user.dto;
+package com.hwanseung.backend.domain.user.vo;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

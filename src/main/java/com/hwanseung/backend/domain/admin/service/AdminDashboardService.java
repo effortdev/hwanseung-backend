@@ -1,5 +1,9 @@
 package com.hwanseung.backend.domain.admin.service;
 
+import com.hwanseung.backend.domain.admin.dto.DashboardDTO;
+import com.hwanseung.backend.domain.admin.entity.Report;
+import com.hwanseung.backend.domain.product.entity.Product;
+import jakarta.persistence.TypedQuery;
 import com.hwanseung.backend.domain.admin.dto.DashboardDTO.SummaryResponse;
 import com.hwanseung.backend.domain.admin.dto.DashboardDTO.WeeklyTrendResponse;
 import jakarta.persistence.EntityManager;
@@ -14,12 +18,109 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AdminDashboardService {
 
     private final EntityManager entityManager;
+    private static final DateTimeFormatter LOG_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    /**
+     * 미처리 신고 내역 (PENDING 상태, 최근 7건)
+     */
+    public List<DashboardDTO.PendingReportItem> getPendingReports() {
+        try {
+            TypedQuery<Report> query = entityManager.createQuery(
+                    "SELECT r FROM Report r WHERE r.status = 'PENDING' ORDER BY r.createdAt DESC",
+                    Report.class
+            );
+            query.setMaxResults(7);
+
+            return query.getResultList().stream()
+                    .map(r -> DashboardDTO.PendingReportItem.builder()
+                            .id(r.getId())
+                            .reasonCategory(r.getReasonCategory())
+                            .reportedNickname(r.getReportedNickname())
+                            .status(r.getStatus())
+                            .createdAt(r.getCreatedAt() != null
+                                    ? r.getCreatedAt().format(LOG_FORMATTER) : "")
+                            .build())
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * 최근 거래완료 로그 (SOLD_OUT 상태, 최근 10건)
+     * - deletedAt IS NULL 조건으로 소프트삭제 상품 제외
+     */
+    public List<DashboardDTO.TransactionLogItem> getTransactionLogs() {
+        try {
+            TypedQuery<Product> query = entityManager.createQuery(
+                    "SELECT p FROM Product p " +
+                            "WHERE p.saleStatus = 'SOLD_OUT' AND p.deletedAt IS NULL " +
+                            "ORDER BY p.updatedAt DESC",
+                    Product.class
+            );
+            query.setMaxResults(10);
+
+            return query.getResultList().stream()
+                    .map(p -> DashboardDTO.TransactionLogItem.builder()
+                            .productId(p.getProductId())
+                            .title(p.getTitle())
+                            .sellerNickname(p.getSellerNickname())
+                            .price(p.getPrice())
+                            .completedAt(p.getUpdatedAt() != null
+                                    ? p.getUpdatedAt().format(LOG_FORMATTER) : "")
+                            .build())
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * 최근 등록 상품 (최근 6건)
+     * - deletedAt IS NULL 조건으로 소프트삭제 상품 제외
+     * - LEFT JOIN FETCH로 이미지 Lazy Loading 문제 방지
+     */
+    public List<DashboardDTO.RecentProductItem> getRecentProducts() {
+        try {
+            TypedQuery<Product> query = entityManager.createQuery(
+                    "SELECT DISTINCT p FROM Product p LEFT JOIN FETCH p.productImages " +
+                            "WHERE p.deletedAt IS NULL " +
+                            "ORDER BY p.createdAt DESC",
+                    Product.class
+            );
+            query.setMaxResults(6);
+
+            return query.getResultList().stream()
+                    .map(p -> {
+                        // 첫 번째 이미지 URL 추출 (ProductImage 엔티티의 실제 getter에 맞게 수정)
+                        String firstImage = null;
+                        if (p.getProductImages() != null && !p.getProductImages().isEmpty()) {
+                            // TODO: ProductImage의 실제 URL 필드명 확인
+                            // 예: getImageUrl(), getFilePath(), getStoredName() 등
+                            firstImage = p.getProductImages().get(0).getImagePath();
+                        }
+                        return DashboardDTO.RecentProductItem.builder()
+                                .productId(p.getProductId())
+                                .title(p.getTitle())
+                                .price(p.getPrice())
+                                .imageUrl(firstImage)
+                                .createdAt(p.getCreatedAt() != null
+                                        ? p.getCreatedAt().format(LOG_FORMATTER) : "")
+                                .build();
+                    })
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
 
     /**
      * 최근 7일간 일별 거래 건수 + 가입 건수 조회

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -21,6 +22,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class WebSecurityConfig {
     private final JwtTokenFilter jwtTokenFilter;
@@ -90,10 +92,14 @@ public class WebSecurityConfig {
 //                        // 그 외 나머지 모든 요청(정적 리소스 등)은 허용
 //                        .anyRequest().permitAll()
                                 // 1. [기존 유지] 관리자 및 인증 관련
-                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "SUPER", "SUB")
+                                .requestMatchers("/api/admin/manage").hasRole("SUPER")
                                 .requestMatchers("/api/auth/**").permitAll()
                                 .requestMatchers("/api/user/social-signup-extra").authenticated()
                                 .requestMatchers("/api/user/check/**").permitAll()
+                                .requestMatchers("/api/search/popular").permitAll()
+                                .requestMatchers("/api/search/log").permitAll()
+                                .requestMatchers("/api/public/**").permitAll()
 
                                 // 2. [수정/추가] 상품 페이지 관련
                                 // 상품 상세 조회(GET)는 아무나 볼 수 있게 허용 (403 방지)

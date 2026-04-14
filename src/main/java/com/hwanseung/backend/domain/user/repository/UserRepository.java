@@ -1,6 +1,7 @@
 package com.hwanseung.backend.domain.user.repository;
 
 import com.hwanseung.backend.domain.admin.dto.Status;
+import com.hwanseung.backend.domain.user.entity.Role;
 import com.hwanseung.backend.domain.user.entity.User;
 import com.hwanseung.backend.domain.user.dto.UserRequestDTO;
 import org.springframework.data.domain.Page;
@@ -11,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -42,4 +44,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.status = 'SUSPENDED' " +
             "AND (:keyword IS NULL OR :keyword = '' OR u.nickname LIKE %:keyword% OR u.email LIKE %:keyword%)")
     Page<User> findSuspendedUsers(@Param("keyword") String keyword, Pageable pageable);
+
+    List<User> findByRoleIn(List<Role> roles);
 }

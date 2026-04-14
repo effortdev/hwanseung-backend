@@ -1,8 +1,13 @@
 package com.hwanseung.backend.domain.user.service;
 
 // 삭제: import jakarta.transaction.Transactional;
+import com.hwanseung.backend.domain.user.config.CustomUserDetails;
+import com.hwanseung.backend.domain.user.config.JwtTokenProvider;
+import com.hwanseung.backend.domain.user.entity.Auth;
 import com.hwanseung.backend.domain.user.repository.AuthRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.transaction.annotation.Transactional; // 이걸로 교체
 import com.hwanseung.backend.domain.user.entity.User;
 import com.hwanseung.backend.domain.user.dto.UserRequestDTO;
@@ -14,7 +19,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.UUID;
+import com.hwanseung.backend.domain.admin.dto.Status;
+import com.hwanseung.backend.domain.user.entity.Role;
 
 @Service
 @RequiredArgsConstructor
@@ -117,6 +125,34 @@ public class UserService {
         // 메서드가 끝날 때 @Transactional에 의해 DB에 UPDATE 쿼리가 날아갑니다.
         // 이때 status는 'SECESSION'으로, updated_at은 현재 시간으로 업데이트됩니다!
     }
+
+    @Transactional
+    public User completeSocialSignup(String username, String contact) {
+        // 1. 유저 정보 업데이트
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        user.setContact(contact);
+        user.setStatus(Status.ACTIVE);
+        userRepository.save(user);
+
+        // 2. 새 토큰 생성 (컨트롤러에서 하던 걸 서비스로 가져오거나, 여기서 토큰을 미리 만듦)
+        // 이 메서드 안에서 토큰 업데이트 로직을 직접 넣는 것이 좋습니다.
+        return user;
+    }
+
+    @Transactional
+    public void updateAuthToken(User user, String newAccessToken) {
+        // 1. 유저의 고유 ID(Long)를 사용하여 인증 정보 조회
+        Auth auth = authRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new RuntimeException("인증 정보를 찾을 수 없습니다."));
+
+        // 2. 새 토큰으로 교체
+        auth.setAccessToken(newAccessToken);
+
+        // Dirty Checking으로 자동 저장되지만 명시적으로 호출 가능
+        authRepository.save(auth);
+    }
+
 
     /* User테이블 총 사용자 수 */
     @Transactional(readOnly = true)

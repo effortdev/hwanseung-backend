@@ -11,6 +11,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import com.hwanseung.backend.domain.user.config.CustomUserDetails;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerInterceptor;
 
 @Configuration
 @EnableWebSecurity
@@ -22,7 +29,14 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
                 .csrf(csrf -> csrf.disable()) // Spring Security와 같은 웹 보안 프레임워크에서 CSRF (Cross-Site Request Forgery) 보호 기능을 비활성화하는 설정. 세션을 사용하지 않고 토큰을 내보내야 하기 위해
-                .cors(cors -> {}) // 추가: WebConfig의 CORS 설정을 Security에서도 사용하도록 연결
+                .cors(cors -> cors.configurationSource(request -> {
+                    var corsConfiguration = new org.springframework.web.cors.CorsConfiguration();
+                    corsConfiguration.setAllowedOrigins(java.util.List.of("https://hsmarket.duckdns.org", "http://localhost:5173"));
+                    corsConfiguration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                    corsConfiguration.setAllowedHeaders(java.util.List.of("*"));
+                    corsConfiguration.setAllowCredentials(true);
+                    return corsConfiguration;
+                })) // 추가: WebConfig의 CORS 설정을 Security에서도 사용하도록 연결
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
 //                        // 관리자 : 관리자 관련 모든 요청에 대해 승인된 사용자 중 ADMIN 권한이 있는 사용자만 허용
@@ -78,6 +92,7 @@ public class WebSecurityConfig {
                                 // 1. [기존 유지] 관리자 및 인증 관련
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                                 .requestMatchers("/api/auth/**").permitAll()
+                                .requestMatchers("/api/user/social-signup-extra").authenticated()
                                 .requestMatchers("/api/user/check/**").permitAll()
 
                                 // 2. [수정/추가] 상품 페이지 관련

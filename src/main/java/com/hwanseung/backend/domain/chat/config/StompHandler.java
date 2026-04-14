@@ -36,12 +36,12 @@ public class StompHandler implements ChannelInterceptor {
                     String username = jwtTokenProvider.getUsernameFromToken(token);
                     log.info("🟢 웹소켓 연결 성공! 접속한 유저: {}", username);
                 } else {
-                    log.error("🔴 웹소켓 연결 실패: 유효하지 않은 JWT 토큰입니다.");
-                    throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
+                    log.warn("🟡 유효하지 않은 토큰으로 연결 시도 - 비인증 상태로 진행");
+                    // 예외를 던지지 않고 그냥 둡니다.
                 }
             } else {
-                log.error("🔴 웹소켓 연결 실패: Authorization 헤더가 없거나 형식이 틀렸습니다.");
-                throw new IllegalArgumentException("토큰이 존재하지 않습니다.");
+                log.info("⚪ 토큰 없이 웹소켓 연결 시도 (비회원)");
+                // 예외를 던지지 않고 pass 시킵니다.
             }
         }
 

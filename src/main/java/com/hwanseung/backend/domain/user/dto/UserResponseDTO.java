@@ -24,6 +24,8 @@ public class UserResponseDTO {
     private LocalDateTime createdAt;
     private String profileImagePath;
     private String profileOriginalName;
+    private String status;
+    private String provider;
 
     public UserResponseDTO(User entity) {
         this.id = entity.getId();
@@ -41,5 +43,7 @@ public class UserResponseDTO {
         this.createdAt = entity.getCreatedAt();
         this.profileImagePath = entity.getProfileImagePath();
         this.profileOriginalName = entity.getProfileOriginalName();
+        this.status = entity.getStatus().name();
+        this.provider = entity.getProvider();
     }
 }

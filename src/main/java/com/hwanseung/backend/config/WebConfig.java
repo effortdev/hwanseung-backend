@@ -7,6 +7,7 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import com.hwanseung.backend.domain.user.interceptor.StatusCheckInterceptor;
 
 @Configuration
 @RequiredArgsConstructor
@@ -15,6 +16,8 @@ public class WebConfig implements WebMvcConfigurer {
 //    private String filePath = "file:///C:/bImg/";
     @Value("${custom.upload-path}")
     private String filePath;
+
+    private final StatusCheckInterceptor statusCheckInterceptor;
 
     @Override  // 리소스 외부 경로 맵핑 설정
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -45,10 +48,18 @@ public class WebConfig implements WebMvcConfigurer {
                         "http://localhost:3000",
                         "http://127.0.0.1:3000",
                         "http://localhost:5173",
-                        "http://127.0.0.1:5173"
+                        "http://127.0.0.1:5173",
+                        "https://hsmarket.duckdns.org"
                 )
                 .allowCredentials(true) // 중요!
                 .allowedMethods("*");
 //                .allowedMethods("GET", "POST", "PUT", "DELETE");
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(statusCheckInterceptor)
+                .addPathPatterns("/api/**") // 모든 API에 대해 status 검사 실시
+                .excludePathPatterns("/api/auth/**", "/api/imgs/**", "/api/attachment/**"); // 예외 경로
     }
 }

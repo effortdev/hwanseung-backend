@@ -1,6 +1,5 @@
 package com.hwanseung.backend.config;
 
-import com.hwanseung.backend.domain.admin.controller.UserActivityInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -16,8 +15,6 @@ public class WebConfig implements WebMvcConfigurer {
 //    private String filePath = "file:///C:/bImg/";
     @Value("${custom.upload-path}")
     private String filePath;
-
-    private final UserActivityInterceptor userActivityInterceptor;
 
     @Override  // 리소스 외부 경로 맵핑 설정
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -53,12 +50,5 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowCredentials(true) // 중요!
                 .allowedMethods("*");
 //                .allowedMethods("GET", "POST", "PUT", "DELETE");
-    }
-
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        // 프론트엔드에서 들어오는 API 요청에 대해 활동 시간을 갱신
-        registry.addInterceptor(userActivityInterceptor)
-                .addPathPatterns("/api/**");
     }
 }

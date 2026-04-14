@@ -28,25 +28,9 @@ public class AdminProductController {
     }
 
     /** 상품 상세 조회 */
-//    @GetMapping("/{productId}")
-//    public ResponseEntity<DetailResponse> getProductDetail(@PathVariable Long productId) {
-//        return ResponseEntity.ok(productService.getProductDetail(productId));
-//    }
-
-    /** 상품 승인 */
-    @PatchMapping("/{productId}/approve")
-    public ResponseEntity<Void> approveProduct(@PathVariable Long productId) {
-        productService.approveProduct(productId);
-        return ResponseEntity.ok().build();
-    }
-
-    /** 상품 반려 */
-    @PatchMapping("/{productId}/reject")
-    public ResponseEntity<Void> rejectProduct(
-            @PathVariable Long productId,
-            @RequestBody ReasonRequest request) {
-        productService.rejectProduct(productId, request.getReason());
-        return ResponseEntity.ok().build();
+    @GetMapping("/{productId}")
+    public ResponseEntity<DetailResponse> getProductDetail(@PathVariable Long productId) {
+        return ResponseEntity.ok(productService.getProductDetail(productId));
     }
 
     /** 상품 숨김 */
@@ -69,13 +53,6 @@ public class AdminProductController {
     @DeleteMapping("/{productId}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long productId) {
         productService.deleteProduct(productId);
-        return ResponseEntity.ok().build();
-    }
-
-    /** 일괄 승인 */
-    @PatchMapping("/bulk/approve")
-    public ResponseEntity<Void> bulkApprove(@RequestBody BulkRequest request) {
-        productService.bulkApprove(request.getProductIds());
         return ResponseEntity.ok().build();
     }
 

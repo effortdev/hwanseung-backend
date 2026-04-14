@@ -6,12 +6,6 @@ import java.util.List;
 
 public class StatisticsDTO {
 
-    /** 1. 실시간 접속자 수 */
-    @Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
-    public static class OnlineUsersResponse {
-        private int count;
-    }
-
     /** 2. 사용자 통계 */
     @Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
     public static class UserStatsResponse {

@@ -31,7 +31,7 @@ public class WebSecurityConfig {
                 .csrf(csrf -> csrf.disable()) // Spring Security와 같은 웹 보안 프레임워크에서 CSRF (Cross-Site Request Forgery) 보호 기능을 비활성화하는 설정. 세션을 사용하지 않고 토큰을 내보내야 하기 위해
                 .cors(cors -> cors.configurationSource(request -> {
                     var corsConfiguration = new org.springframework.web.cors.CorsConfiguration();
-                    corsConfiguration.setAllowedOrigins(java.util.List.of("https://hsmarket.duckdns.org", "http://localhost:5173"));
+                    corsConfiguration.setAllowedOrigins(java.util.List.of("https://hsmarket.duckdns.org", "http://localhost:5173", "http://localhost"));
                     corsConfiguration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     corsConfiguration.setAllowedHeaders(java.util.List.of("*"));
                     corsConfiguration.setAllowCredentials(true);

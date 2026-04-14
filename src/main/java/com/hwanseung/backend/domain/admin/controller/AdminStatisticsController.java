@@ -14,12 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminStatisticsController {
     private final AdminStatisticsService statisticsService;
 
-    /** 1. 실시간 접속자 수 */
-    @GetMapping("/online-users")
-    public ResponseEntity<OnlineUsersResponse> getOnlineUsers() {
-        return ResponseEntity.ok(statisticsService.getOnlineUsers());
-    }
-
     /** 2. 사용자 통계 */
     @GetMapping("/users")
     public ResponseEntity<UserStatsResponse> getUserStats() {

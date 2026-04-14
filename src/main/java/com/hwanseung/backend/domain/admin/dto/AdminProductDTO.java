@@ -64,7 +64,7 @@ public class AdminProductDTO {
     /** 일괄 처리 요청 */
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor
     public static class BulkRequest {
-        private List<Long> productIds;
+        private List<Integer> productIds;
     }
 
     /** 요약 카운트 */

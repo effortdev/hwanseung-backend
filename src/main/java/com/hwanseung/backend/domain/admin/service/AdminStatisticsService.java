@@ -1,14 +1,16 @@
 package com.hwanseung.backend.domain.admin.service;
 
-import com.hwanseung.backend.domain.admin.controller.LoginManager;
 import com.hwanseung.backend.domain.admin.dto.StatisticsDTO.*;
 import com.hwanseung.backend.domain.admin.dto.Status;
 import com.hwanseung.backend.domain.admin.repository.AdminReportRepository;
 import com.hwanseung.backend.domain.admin.repository.SearchKeywordRepository;
+import com.hwanseung.backend.domain.admin.repository.TransactionRepository;
+import com.hwanseung.backend.domain.product.repository.ProductLikeRepository;
 import com.hwanseung.backend.domain.product.repository.ProductRepository;
 import com.hwanseung.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,18 +28,8 @@ public class AdminStatisticsService {
     private final AdminReportRepository reportRepository;
     private final SearchKeywordRepository searchKeywordRepository;
 
-    // private final TransactionRepository transactionRepository;  // 거래 엔티티가 있다면
-    // private final WishlistRepository wishlistRepository;        // 찜 엔티티가 있다면
-
-    // LoginManager 의존성 주입 추가
-    private final LoginManager loginManager;
-
-    /** 1. 실시간 접속자 수 */
-    public OnlineUsersResponse getOnlineUsers() {
-        // 하드코딩된 0을 지우고, LoginManager에서 실제 카운트를 가져옴
-        int count = loginManager.getActiveUserCount();
-        return OnlineUsersResponse.builder().count(count).build();
-    }
+     private final TransactionRepository transactionRepository;  // 거래 엔티티가 있다면
+     private final ProductLikeRepository wishlistRepository;       // 찜 엔티티가 있다면
 
     /** 2. 사용자 통계 */
     public UserStatsResponse getUserStats() {
@@ -59,19 +51,32 @@ public class AdminStatisticsService {
     }
 
     /** 3. 거래 통계 */
+    @Transactional(readOnly = true)
     public TransactionStatsResponse getTransactionStats() {
-        // TODO: Transaction 엔티티/Repository가 있다면 실제 데이터 조회
-        // 예시:
-        // long totalTx = transactionRepository.count();
-        // long totalGMV = transactionRepository.sumTotalPrice();
-        // long dailyTx = transactionRepository.countByCreatedAtAfter(todayStart);
-        // long monthlyTx = transactionRepository.countByCreatedAtAfter(monthStart);
+        // 1. 현재 날짜 기준 설정 (LocalDate 사용)
+        LocalDate today = LocalDate.now();
+
+        // 2. 시간 경계값 계산 (LocalDateTime 변환)
+        // 오늘 시작: 2024-05-20 -> 2024-05-20T00:00:00
+        LocalDateTime startOfToday = today.atStartOfDay();
+
+        // 이번 달 시작: 2024-05-20 -> 2024-05-01T00:00:00
+        LocalDateTime startOfMonth = today.withDayOfMonth(1).atStartOfDay();
+
+        // 3. 데이터 조회 (Repository 호출)
+        long totalTx = transactionRepository.count();
+        long totalGMV = transactionRepository.sumTotalPrice();
+
+        // After 메서드는 해당 시간 '이후'를 조회하므로 00:00:00를 포함하려면
+        // 쿼리에서 >= (Greater than or Equal) 조건이 쓰이는지 확인해야 합니다.
+        long dailyTx = transactionRepository.countByCreatedAtGreaterThanEqual(startOfToday);
+        long monthlyTx = transactionRepository.countByCreatedAtGreaterThanEqual(startOfMonth);
 
         return TransactionStatsResponse.builder()
-                .totalTransactions(0)
-                .totalGMV(0)
-                .dailyTransactions(0)
-                .monthlyTransactions(0)
+                .totalTransactions(totalTx)
+                .totalGMV(totalGMV)
+                .dailyTransactions(dailyTx)
+                .monthlyTransactions(monthlyTx)
                 .build();
     }
 
@@ -131,13 +136,11 @@ public class AdminStatisticsService {
                 .collect(Collectors.toList());
 
         // TODO: Wishlist 엔티티가 있다면 실제 데이터 조회
-        // long totalWishlist = wishlistRepository.count();
-        // long dailyWishlist = wishlistRepository.countByCreatedAtAfter(todayStart);
+         long totalWishlist = wishlistRepository.count();
 
         return SearchStatsResponse.builder()
                 .popularKeywords(keywords)
-                .totalWishlist(0)
-                .dailyWishlist(0)
+                .totalWishlist(totalWishlist)
                 .build();
     }
 

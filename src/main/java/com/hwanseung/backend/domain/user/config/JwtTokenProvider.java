@@ -1,5 +1,6 @@
 package com.hwanseung.backend.domain.user.config;
 
+import com.hwanseung.backend.domain.user.entity.User;
 import io.jsonwebtoken.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -25,6 +26,7 @@ public class JwtTokenProvider {
                 .claim("user-id", customUserDetails.getId())
                 .claim("role", customUserDetails.getAuthorities().iterator().next().toString())
                 .claim("user-email", customUserDetails.getEmail())
+                .claim("status", customUserDetails.getStatus())
                 .setIssuedAt(new Date())
                 .setExpiration(expiryDate)
                 .signWith(SignatureAlgorithm.HS512, jwtSecretKey)
@@ -94,5 +96,28 @@ public class JwtTokenProvider {
             System.out.println("JWT claims string is empty.");
         }
         return false;
+    }
+
+    public String generateAccessTokenFromUser(User user) {
+        Date expiryDate = new Date(new Date().getTime() + jwtAccessTokenExpirationTime);
+
+        return Jwts.builder()
+                .setSubject(user.getUsername())
+                .claim("user-id", user.getId())
+                .claim("role", user.getRole().name()) // 기존 권한 그대로 사용
+                .claim("status", user.getStatus().name()) // 업데이트된 상태 사용
+                .claim("user-email", user.getEmail())
+                .setIssuedAt(new Date())
+                .setExpiration(expiryDate)
+                .signWith(SignatureAlgorithm.HS512, jwtSecretKey)
+                .compact();
+    }
+
+    public String getStatusFromToken(String token) {
+        return Jwts.parser()
+                .setSigningKey(jwtSecretKey)
+                .parseClaimsJws(token)
+                .getBody()
+                .get("status", String.class);
     }
 }

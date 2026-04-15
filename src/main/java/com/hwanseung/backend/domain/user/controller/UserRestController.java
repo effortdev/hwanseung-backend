@@ -9,6 +9,7 @@ import com.hwanseung.backend.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -102,4 +103,30 @@ public class UserRestController {
         // ✅ 맞으면 200(OK) 성공 신호를 보냅니다.
         return ResponseEntity.ok(Map.of("message", "비밀번호가 확인되었습니다."));
     }
+
+    @PostMapping("/api/user/social-signup-extra")
+    public ResponseEntity<?> updateSocialExtraInfo(
+            @RequestBody UserRequestDTO userRequestDTO,
+            Authentication authentication) {
+
+        String username = authentication.getName();
+
+
+        try {
+                // 1. 유저 정보 업데이트
+                User updatedUser = userService.completeSocialSignup(username, userRequestDTO.getContact());
+
+                // 2. 새로운 토큰 생성
+                String newAccessToken = jwtTokenProvider.generateAccessTokenFromUser(updatedUser);
+
+                // 3. [수정된 부분] 유저 객체(또는 ID)를 전달하여 DB 토큰 갱신
+                userService.updateAuthToken(updatedUser, newAccessToken);
+
+                return ResponseEntity.ok().body(newAccessToken);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("저장 중 오류가 발생했습니다.");
+        }
+    }
+
+
 }

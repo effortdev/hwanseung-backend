@@ -15,7 +15,7 @@ import java.util.Map;
 
 @RequiredArgsConstructor
 @RestController
-@CrossOrigin(origins = "http://localhost:5173")
+//@CrossOrigin(origins = "http://localhost:5173")
 public class AuthRestController {
     private final AuthService authService;
     private final UserService userService;
@@ -121,4 +121,16 @@ public class AuthRestController {
         }
     }
 
+    @PostMapping("/api/auth/google")
+    public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> data) {
+        try {
+            String idTokenString = data.get("token");
+            // 핵심 로직은 서비스로 위임
+            AuthResponseDTO responseDto = authService.googleLogin(idTokenString);
+            return ResponseEntity.ok(responseDto);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "구글 로그인 인증에 실패했습니다: " + e.getMessage()));
+        }
+    }
 }

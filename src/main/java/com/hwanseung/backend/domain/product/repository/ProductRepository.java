@@ -1,7 +1,6 @@
 package com.hwanseung.backend.domain.product.repository;
 
 import com.hwanseung.backend.domain.product.entity.Product;
-import com.hwanseung.backend.domain.product.entity.ProductLike;
 import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,7 +20,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     List<Product> findBySellerIdOrderByCreatedAtDesc(String sellerId);
     //sellerId가져오기(product테이블)
 
-        //삭제된 데이터 확인 및 가리기
+    //삭제된 데이터 확인 및 가리기
     List<Product> findBySellerIdAndDeletedAtIsNullOrderByCreatedAtDesc(String sellerId);
 
     // 1. 전체 상품 개수 (기본 제공)
@@ -29,7 +28,6 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     // deleted_at 컬럼이 null인 데이터만 카운트
     long countByDeletedAtIsNull();
-
     // ==========================================
     long countByCreatedAtAfter(LocalDateTime dateTime);
     long countByPriceLessThanEqual(int price);
@@ -41,9 +39,10 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     List<Object[]> countByCategory();
 
     @Query("SELECT p FROM Product p WHERE " +
-            "(:keyword = '' OR p.title LIKE %:keyword% OR p.location LIKE %:keyword%) " +
-            "AND (:status = '' OR p.saleStatus = :status) " +
-            "AND (:category = '' OR p.category = :category)")
+            "p.deletedAt IS NULL " + // Soft Delete된 데이터 목록에서 제외
+            "AND (:keyword IS NULL OR p.title LIKE %:keyword% OR p.location LIKE %:keyword%) " +
+            "AND (:status IS NULL OR p.saleStatus = :status) " +
+            "AND (:category IS NULL OR p.category = :category)")
     Page<Product> searchProducts(@Param("keyword") String keyword,
                                  @Param("status") String status,
                                  @Param("category") String category,
@@ -95,4 +94,12 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     List<Product> findNearbyProducts(@Param("userLat") double userLat,
                                      @Param("userLng") double userLng,
                                      @Param("radius") double radius);
+
+    long countBySaleStatusAndDeletedAtIsNull(String sale);
+
+
+//    @Modifying
+//    @Transactional // Service 계층에서 처리한다면 생략 가능하지만, 안전을 위해 권장
+//    @Query("UPDATE Product p SET p.category = null WHERE p.category.id = :categoryId")
+//    void clearCategoryByCategoryId(@Param("categoryId") String id);
 }

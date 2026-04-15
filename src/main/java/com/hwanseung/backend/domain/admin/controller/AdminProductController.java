@@ -20,9 +20,9 @@ public class AdminProductController {
     public ResponseEntity<Map<String, Object>> getProducts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "") String keyword,
-            @RequestParam(defaultValue = "") String status,
-            @RequestParam(defaultValue = "") String category,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String category,
             @RequestParam(defaultValue = "latest") String sort) {
         return ResponseEntity.ok(productService.getProducts(page, size, keyword, status, category, sort));
     }
@@ -31,22 +31,6 @@ public class AdminProductController {
     @GetMapping("/{productId}")
     public ResponseEntity<DetailResponse> getProductDetail(@PathVariable Long productId) {
         return ResponseEntity.ok(productService.getProductDetail(productId));
-    }
-
-    /** 상품 승인 */
-    @PatchMapping("/{productId}/approve")
-    public ResponseEntity<Void> approveProduct(@PathVariable Long productId) {
-        productService.approveProduct(productId);
-        return ResponseEntity.ok().build();
-    }
-
-    /** 상품 반려 */
-    @PatchMapping("/{productId}/reject")
-    public ResponseEntity<Void> rejectProduct(
-            @PathVariable Long productId,
-            @RequestBody ReasonRequest request) {
-        productService.rejectProduct(productId, request.getReason());
-        return ResponseEntity.ok().build();
     }
 
     /** 상품 숨김 */
@@ -69,13 +53,6 @@ public class AdminProductController {
     @DeleteMapping("/{productId}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long productId) {
         productService.deleteProduct(productId);
-        return ResponseEntity.ok().build();
-    }
-
-    /** 일괄 승인 */
-    @PatchMapping("/bulk/approve")
-    public ResponseEntity<Void> bulkApprove(@RequestBody BulkRequest request) {
-        productService.bulkApprove(request.getProductIds());
         return ResponseEntity.ok().build();
     }
 

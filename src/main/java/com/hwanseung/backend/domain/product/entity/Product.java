@@ -1,11 +1,7 @@
 package com.hwanseung.backend.domain.product.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -17,6 +13,7 @@ import java.util.List;
 @Entity
 @Table(name = "product")
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
@@ -78,13 +75,22 @@ public class Product {
     @Column(name = "view_count", nullable = false)
     private int viewCount = 0; // 조회수
 
-    @Column
-    private Integer reportCount; // 신고횟수
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer reportCount = 0;
 
     // 상품 1개 : 이미지 여러 개
     @Builder.Default
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImage> productImages = new ArrayList<>();
+
+    /**
+     * 관리자에 의한 숨김 사유
+     * - 상태가 'HIDDEN'일 때만 값이 존재하도록 비즈니스 로직에서 제어
+     * - 사유가 길어질 수 있으므로 충분한 길이를 확보하거나 TEXT 타입 권장
+     */
+    @Column(name = "hide_reason", length = 500) // 일반적인 사유는 500자면 충분하나, 아주 길다면 columnDefinition = "TEXT" 사용
+    private String hideReason;
 
     // 수정
     public void updateProduct(String title, String category, int price, String content, String location) {
@@ -154,4 +160,13 @@ public class Product {
         this.reportCount = reportCount;
     }
 
+    public void markAsHidden(String reason) {
+        this.saleStatus = "HIDDEN";
+        this.hideReason = reason;
+    }
+
+    public void restoreToSale() {
+        this.saleStatus = "SALE";
+        this.hideReason = null; // 숨김 해제 시 사유 초기화
+    }
 }

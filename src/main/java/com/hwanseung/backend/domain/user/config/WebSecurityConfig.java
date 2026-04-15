@@ -34,7 +34,7 @@ public class WebSecurityConfig {
                 .cors(cors -> cors.configurationSource(request -> {
                     var corsConfiguration = new org.springframework.web.cors.CorsConfiguration();
                     corsConfiguration.setAllowedOrigins(java.util.List.of("https://hsmarket.duckdns.org", "http://localhost:5173", "http://localhost"));
-                    corsConfiguration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                    corsConfiguration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE","PATCH", "OPTIONS"));
                     corsConfiguration.setAllowedHeaders(java.util.List.of("*"));
                     corsConfiguration.setAllowCredentials(true);
                     return corsConfiguration;
@@ -108,6 +108,8 @@ public class WebSecurityConfig {
                                 .requestMatchers(HttpMethod.POST, "/api/products/**").authenticated()
                                 .requestMatchers(HttpMethod.PUT, "/api/products/**").authenticated()
                                 .requestMatchers(HttpMethod.DELETE, "/api/products/**").authenticated()
+                                .requestMatchers("/api/notices/**").authenticated()
+                                .requestMatchers("/api/inquiries/**").authenticated()
 
                                 // 3. [추가] 이미지 및 정적 리소스 허용 (403 방지)
                                 // 실제 이미지 경로인 /api/imgs/** 를 허용 목록에 추가

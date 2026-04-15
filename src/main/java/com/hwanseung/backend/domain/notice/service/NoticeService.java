@@ -8,10 +8,14 @@ import com.hwanseung.backend.domain.notice.repository.NoticeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +23,15 @@ public class NoticeService {
 
     private final NoticeRepository noticeRepository;
 
+
+    public List<NoticeResponseDTO> getAllList() {
+        List<Notice> list = noticeRepository.findAll(Sort.by("pinned").descending().and(Sort.by("createdAt").descending()));
+
+        List<NoticeResponseDTO> dtoList = list.stream()
+                .map(notice -> new NoticeResponseDTO(notice)) // 또는 NoticeResponseDto::new
+                .collect(Collectors.toList());
+        return dtoList;
+    }
     public Page<NoticeResponseDTO> getList(String keyword, Pageable pageable) {
         return noticeRepository.findByTitleContainingOrderByPinnedDescCreatedAtDesc(keyword, pageable)
                 .map(this::toDTO);
@@ -43,7 +56,7 @@ public class NoticeService {
                 .id(id)
                 .title(dto.getTitle())
                 .content(dto.getContent())
-                .pinned(notice.getPinned())
+                .pinned(dto.getPinned())
                 .createdAt(notice.getCreatedAt())
                 .build();
         noticeRepository.save(notice);

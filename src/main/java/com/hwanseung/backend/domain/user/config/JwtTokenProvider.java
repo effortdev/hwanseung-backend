@@ -80,6 +80,7 @@ public class JwtTokenProvider {
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public Boolean validateToken(String token) {
+        System.out.println("인증 토큰 유효성 체크");
         try {
             Jwts.parser().setSigningKey(jwtSecretKey).parseClaimsJws(token);
             return true;

@@ -1,5 +1,6 @@
 package com.hwanseung.backend.domain.notice.dto;
 
+import com.hwanseung.backend.domain.notice.entity.Notice;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,4 +18,12 @@ public class NoticeResponseDTO {
     private String content;
     private LocalDateTime createdAt;
     private Integer pinned;
+
+    public NoticeResponseDTO(Notice notice) {
+        this.id = notice.getId();
+        this.title = notice.getTitle();
+        this.content = notice.getContent();
+        this.createdAt = notice.getCreatedAt();
+        this.pinned = notice.getPinned();
+    }
 }

@@ -7,8 +7,10 @@ import com.hwanseung.backend.domain.notice.service.NoticeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 
 
 @RestController
@@ -17,6 +19,11 @@ import org.springframework.web.bind.annotation.*;
 public class NoticeController {
 
     private final NoticeService noticeService;
+
+    @GetMapping("/all/list")
+    public List<NoticeResponseDTO> list() {
+        return noticeService.getAllList();
+    }
 
     @GetMapping
     public Page<NoticeResponseDTO> list(String keyword, Pageable pageable) {
@@ -30,7 +37,6 @@ public class NoticeController {
 
     @PostMapping
     public void create(@RequestBody NoticeCreateRequestDTO dto) {
-        System.out.println("create 555: "+dto);
         noticeService.create(dto);
     }
 

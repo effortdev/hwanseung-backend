@@ -71,81 +71,101 @@ public class PayRestController {
     @PostMapping("/verify")
     public ResponseEntity<String> verifyCharge(@RequestHeader("Authorization") String accessToken,
                                                @RequestBody PayChargeVO chargeVO) {
-
-        System.out.println("=========================================");
-        System.out.println("🚨 [1단계] 프론트에서 데이터 잘 도착했나?");
-        System.out.println("전달받은 impUid: " + chargeVO.getImpUid());
-        System.out.println("전달받은 금액: " + chargeVO.getAmount());
-
-        if (chargeVO.getImpUid() == null) {
-            System.out.println("❌ 실패원인: impUid가 null입니다. (데이터 배달 사고)");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("fail");
-        }
-
-        Long userId = this.jwtTokenProvider.getUserIdFromToken(accessToken.substring(7));
-        String iamportToken = getToken();
-
-        if (iamportToken == null) {
-            System.out.println("❌ 실패원인: 포트원 토큰 발급 실패");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("fail");
-        }
-
         try {
-            System.out.println("🚨 [2단계] 포트원에 영수증 검증 요청 시작");
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://api.iamport.kr/payments/" + chargeVO.getImpUid()))
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + iamportToken)
-                    .method("GET", HttpRequest.BodyPublishers.ofString("{}"))
-                    .build();
+            String impUid = chargeVO.getImpUid() == null ? null : chargeVO.getImpUid().trim();
+            String merchantUid = chargeVO.getMerchantUid() == null ? null : chargeVO.getMerchantUid().trim();
 
-            HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-            System.out.println("포트원 응답 결과: " + response.body());
-
-            ObjectMapper mapper = new ObjectMapper();
-            Map<String, Object> resMap = mapper.readValue(response.body(), Map.class);
-            Map<String, Object> iamportData = (Map<String, Object>) resMap.get("response");
-
-            if (iamportData == null) {
-                System.out.println("❌ 실패원인: 포트원이 결제 내역을 안 줌 (이유: " + resMap.get("message") + ")");
+            if (impUid == null || impUid.isBlank()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("fail");
             }
 
-            // 금액 검증 로직 안전하게 수정
-            int actualPaidAmount = Integer.parseInt(String.valueOf(iamportData.get("amount")));
-            String status = (String) iamportData.get("status");
+            Long userId = jwtTokenProvider.getUserIdFromToken(accessToken.substring(7));
+            String iamportToken = getToken();
 
-            System.out.println("🚨 [3단계] 해킹(금액 조작) 검증");
-            System.out.println("프론트가 보낸 금액: " + chargeVO.getAmount() + " vs 실제 결제된 금액: " + actualPaidAmount);
-            System.out.println("결제 상태: " + status);
-
-            if ("paid".equals(status) && chargeVO.getAmount() == actualPaidAmount) {
-                System.out.println("🚨 [4단계] 금액 검증 통과! DB 저장 시작");
-                PayHistory history = new PayHistory();
-                history.setUserId(String.valueOf(userId));
-                history.setImpUid(chargeVO.getImpUid());
-                history.setMerchantUid(chargeVO.getMerchantUid());
-                history.setType("CHARGE");
-                history.setAmount(actualPaidAmount);
-
-                boolean isSuccess = payService.chargeHwanseungPay(history);
-
-                if(isSuccess) {
-                    System.out.println("✅ [최종 성공] DB 저장까지 완벽하게 완료되었습니다!");
-                    return ResponseEntity.status(HttpStatus.OK).body("success");
-                } else {
-                    System.out.println("❌ 실패원인: DB 저장 로직(payService)에서 false를 반환함");
-                }
-            } else {
-                System.out.println("❌ 실패원인: 결제 상태가 paid가 아니거나, 금액이 불일치합니다!");
+            if (iamportToken == null || iamportToken.isBlank()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("fail");
             }
-        } catch (Exception e) {
-            System.out.println("❌ 실패원인: 백엔드 내부 에러 발생 (아래 로그 확인)");
-            e.printStackTrace();
-        }
 
-        System.out.println("=========================================");
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("fail");
+            ObjectMapper mapper = new ObjectMapper();
+
+            Map<String, Object> paymentData = fetchPaymentByImpUid(iamportToken, impUid, mapper);
+
+            if (paymentData == null && merchantUid != null && !merchantUid.isBlank()) {
+                paymentData = fetchPaymentByMerchantUid(iamportToken, merchantUid, mapper);
+            }
+
+            if (paymentData == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("fail");
+            }
+
+            Number amountValue = (Number) paymentData.get("amount");
+            int actualPaidAmount = amountValue.intValue();
+            String status = String.valueOf(paymentData.get("status"));
+            String paidImpUid = String.valueOf(paymentData.get("imp_uid"));
+            String paidMerchantUid = String.valueOf(paymentData.get("merchant_uid"));
+
+            if (!"paid".equals(status)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("fail");
+            }
+
+            if (chargeVO.getAmount() != actualPaidAmount) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("fail");
+            }
+
+            PayHistory history = new PayHistory();
+            history.setUserId(String.valueOf(userId));
+            history.setImpUid(paidImpUid);
+            history.setMerchantUid(paidMerchantUid);
+            history.setType("CHARGE");
+            history.setAmount(actualPaidAmount);
+
+            boolean isSuccess = payService.chargeHwanseungPay(history);
+
+            if (!isSuccess) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("fail");
+            }
+
+            return ResponseEntity.ok("success");
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("fail");
+        }
+    }
+
+    private Map<String, Object> fetchPaymentByImpUid(String iamportToken, String impUid, ObjectMapper mapper) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.iamport.kr/payments/" + impUid))
+                    .header("Authorization", iamportToken)
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = HttpClient.newHttpClient()
+                    .send(request, HttpResponse.BodyHandlers.ofString());
+
+            Map<String, Object> resMap = mapper.readValue(response.body(), Map.class);
+            return (Map<String, Object>) resMap.get("response");
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private Map<String, Object> fetchPaymentByMerchantUid(String iamportToken, String merchantUid, ObjectMapper mapper) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.iamport.kr/payments/find/" + merchantUid + "/paid"))
+                    .header("Authorization", iamportToken)
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = HttpClient.newHttpClient()
+                    .send(request, HttpResponse.BodyHandlers.ofString());
+
+            Map<String, Object> resMap = mapper.readValue(response.body(), Map.class);
+            return (Map<String, Object>) resMap.get("response");
+        } catch (Exception e) {
+            return null;
+        }
     }
     // 3. 내 잔액 조회 API
     @GetMapping("/balance")

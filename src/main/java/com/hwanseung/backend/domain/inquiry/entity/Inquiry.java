@@ -1,34 +1,33 @@
 package com.hwanseung.backend.domain.inquiry.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
+import jakarta.persistence.*;
+import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Getter
-@Builder
+@Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@Table(name = "INQUIRY")
 public class Inquiry {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String category; // all, pay, user, product
+
+    @Column(columnDefinition = "TEXT")
     private String question;
 
+    @Column(columnDefinition = "TEXT")
     private String answer;
 
-    private boolean answered;
-
-    private Long userId;
-
+    @Column(name = "CREATED_AT", updatable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 }

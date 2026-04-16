@@ -18,13 +18,11 @@ import org.springframework.web.bind.annotation.*;
 public class AdminController {
     private final AdminService adminService;
 
-    // --- 2번: 사용자 관리 API ---
     @GetMapping("/admin/users")
     public ResponseEntity<Page<UserResponseDto>> getUserList(
             @RequestParam(required = false) String keyword,
             @PageableDefault(page = 0, size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        // 1번만 호출되도록 변수에 할당 (이중 쿼리 실행 방지)
         Page<UserResponseDto> response = adminService.getUserList(keyword, pageable);
         return ResponseEntity.ok(response);
     }

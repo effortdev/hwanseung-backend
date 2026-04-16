@@ -18,9 +18,8 @@ import java.util.stream.Collectors;
 public class AdminCategoryService {
 
     private final CategoryRepository categoryRepository;
-     private final ProductRepository productRepository;  // 상품 수 카운트용
+     private final ProductRepository productRepository;
 
-    /** 전체 목록 조회 (정렬순) */
     @Transactional(readOnly = true)
     public List<Response> getAllCategories() {
         return categoryRepository.findAllByOrderBySortOrderAsc()
@@ -29,7 +28,6 @@ public class AdminCategoryService {
                 .collect(Collectors.toList());
     }
 
-    /** 카테고리 등록 */
     @Transactional
     public Response createCategory(Request request) {
         if (categoryRepository.existsByCategoryKey(request.getKey())) {
@@ -54,7 +52,6 @@ public class AdminCategoryService {
         return toResponse(categoryRepository.save(category));
     }
 
-    /** 카테고리 수정 */
     @Transactional
     public Response updateCategory(Long id, Request request) {
         Category category = categoryRepository.findById(id)
@@ -67,18 +64,14 @@ public class AdminCategoryService {
         return toResponse(categoryRepository.save(category));
     }
 
-    /** 카테고리 삭제 */
     @Transactional
     public void deleteCategory(Long id) {
         if (!categoryRepository.existsById(id)) {
             throw new NoSuchElementException("카테고리를 찾을 수 없습니다.");
         }
-        // TODO: 해당 카테고리에 속한 상품 처리 (카테고리 초기화 등)
-//        productRepository.clearCategoryByCategoryId(id);
         categoryRepository.deleteById(id);
     }
 
-    /** 순서 변경 */
     @Transactional
     public void updateOrder(List<Long> orderedIds) {
         for (int i = 0; i < orderedIds.size(); i++) {
@@ -89,7 +82,6 @@ public class AdminCategoryService {
         }
     }
 
-    /** 활성/비활성 토글 */
     @Transactional
     public void toggleActive(Long id) {
         Category category = categoryRepository.findById(id)
@@ -98,12 +90,9 @@ public class AdminCategoryService {
         categoryRepository.save(category);
     }
 
-    // --- 변환 ---
 
     private Response toResponse(Category c) {
-        // TODO: 실제 상품 수 카운트
         long productCount = productRepository.countByCategory(c.getCategoryKey());
-//        long productCount = 0;
 
         return Response.builder()
                 .id(c.getId())

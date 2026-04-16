@@ -28,7 +28,7 @@ public class NoticeService {
         List<Notice> list = noticeRepository.findAll(Sort.by("pinned").descending().and(Sort.by("createdAt").descending()));
 
         List<NoticeResponseDTO> dtoList = list.stream()
-                .map(notice -> new NoticeResponseDTO(notice)) // 또는 NoticeResponseDto::new
+                .map(notice -> new NoticeResponseDTO(notice))
                 .collect(Collectors.toList());
         return dtoList;
     }

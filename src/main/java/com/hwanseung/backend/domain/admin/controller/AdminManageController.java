@@ -19,9 +19,6 @@ public class AdminManageController {
 
     private final AdminManageService adminManageService;
 
-    /**
-     * 관리자 목록 조회 (ROLE_SUPER, ROLE_ADMIN, ROLE_SUB)
-     */
     @GetMapping("/list")
     @PreAuthorize("hasRole('SUPER')")
     public ResponseEntity<List<AdminUserResponseDto>> getAdminList() {
@@ -29,9 +26,6 @@ public class AdminManageController {
         return ResponseEntity.ok(list);
     }
 
-    /**
-     * 관리자 권한 수정
-     */
     @PutMapping("/role")
     @PreAuthorize("hasRole('SUPER')")
     public ResponseEntity<Map<String, String>> updateRole(@RequestBody AdminRoleUpdateDto dto) {
@@ -39,9 +33,6 @@ public class AdminManageController {
         return ResponseEntity.ok(Map.of("message", "권한이 수정되었습니다."));
     }
 
-    /**
-     * 관리자 계정 생성
-     */
     @PostMapping("/create")
     @PreAuthorize("hasRole('SUPER')")
     public ResponseEntity<Map<String, String>> createAdmin(@RequestBody AdminCreateRequestDto dto) {

@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Getter
-@Builder    // 🔥 반드시 추가
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class NoticeResponseDTO {

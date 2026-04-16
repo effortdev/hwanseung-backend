@@ -6,7 +6,6 @@ import java.util.List;
 
 public class CategoryDTO {
 
-    /** 카테고리 목록 응답 */
     @Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
     public static class Response {
         private Long id;
@@ -19,7 +18,6 @@ public class CategoryDTO {
         private long productCount;
     }
 
-    /** 카테고리 등록/수정 요청 */
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor
     public static class Request {
         private String key;
@@ -28,7 +26,6 @@ public class CategoryDTO {
         private String description;
     }
 
-    /** 순서 변경 요청 */
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor
     public static class OrderRequest {
         private List<Long> orderedIds;

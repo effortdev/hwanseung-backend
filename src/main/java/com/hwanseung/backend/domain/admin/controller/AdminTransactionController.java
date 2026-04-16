@@ -29,7 +29,6 @@ public class AdminTransactionController {
 
     private final AdminTransactionService service;
 
-    /** 일/주/월 시계열 통계 (완료된 거래 기준) */
     @GetMapping("/series")
     public TransactionSeriesResponse getSeries(
             @RequestParam String period,
@@ -38,7 +37,6 @@ public class AdminTransactionController {
         return service.getSeries(period, startDate, endDate);
     }
 
-    /** 판매 상태별 분포 (SALE / SOLD_OUT) */
     @GetMapping("/status-breakdown")
     public List<TransactionStatusCountDTO> getStatusBreakdown(
             @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -46,7 +44,6 @@ public class AdminTransactionController {
         return service.getStatusBreakdown(startDate, endDate);
     }
 
-    /** 카테고리별 거래 TOP N */
     @GetMapping("/top-categories")
     public List<TopCategoryDTO> getTopCategories(
             @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -55,7 +52,6 @@ public class AdminTransactionController {
         return service.getTopCategories(startDate, endDate, limit);
     }
 
-    /** 거래 내역 페이지 */
     @GetMapping
     public Page<TransactionListItemDTO> getList(
             @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,

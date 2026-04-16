@@ -8,10 +8,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.Map;
 
-/**
- * 이미 GlobalExceptionHandler가 존재한다면 이 파일은 생성하지 않아도 됨.
- * 단, IllegalArgumentException과 AccessDeniedException 핸들러가 없다면 아래 메서드를 추가할 것.
- */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 

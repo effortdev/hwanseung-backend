@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@Builder   // 🔥 이거 반드시 있어야 함
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class InquiryResponseDTO {

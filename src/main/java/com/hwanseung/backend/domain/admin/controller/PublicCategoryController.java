@@ -18,10 +18,8 @@ public class PublicCategoryController {
 
     private final AdminCategoryService categoryService;
 
-    /** 일반 유저용 카테고리 전체 목록 (활성화된 것만 반환) */
     @GetMapping
     public ResponseEntity<List<Response>> getActiveCategories() {
-        // 기존 서비스 메서드를 활용하되, active 상태인 것만 필터링하여 응답
         List<Response> activeCategories = categoryService.getAllCategories().stream()
                 .filter(Response::getActive)
                 .collect(Collectors.toList());

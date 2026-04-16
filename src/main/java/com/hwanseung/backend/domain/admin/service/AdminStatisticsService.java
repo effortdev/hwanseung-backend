@@ -21,25 +21,20 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AdminStatisticsService {
 
-    // ※ 아래 Repository들은 기존 프로젝트에 이미 존재하는 것을 주입받는다고 가정합니다.
-    //    없는 경우 해당 Repository를 추가로 만들거나, 직접 쿼리를 작성하세요.
-    private final UserRepository userRepository;           // 기존 User 엔티티 Repository
-    private final ProductRepository productRepository;     // 기존 Product 엔티티 Repository
+    private final UserRepository userRepository;
+    private final ProductRepository productRepository;
     private final AdminReportRepository reportRepository;
     private final SearchKeywordRepository searchKeywordRepository;
 
-     private final TransactionRepository transactionRepository;  // 거래 엔티티가 있다면
-     private final ProductLikeRepository wishlistRepository;       // 찜 엔티티가 있다면
+     private final TransactionRepository transactionRepository;
+     private final ProductLikeRepository wishlistRepository;
 
-    /** 2. 사용자 통계 */
     public UserStatsResponse getUserStats() {
         long totalUsers = userRepository.count();
 
         LocalDateTime todayStart = LocalDate.now().atStartOfDay();
         LocalDateTime monthStart = LocalDate.now().withDayOfMonth(1).atStartOfDay();
 
-        // ※ UserRepository에 아래 메서드 추가 필요:
-        //   long countByCreatedAtAfter(LocalDateTime dateTime);
         long dailyNewUsers = userRepository.countByCreatedAtAfter(todayStart);
         long monthlyNewUsers = userRepository.countByCreatedAtAfter(monthStart);
 
@@ -50,25 +45,17 @@ public class AdminStatisticsService {
                 .build();
     }
 
-    /** 3. 거래 통계 */
     @Transactional(readOnly = true)
     public TransactionStatsResponse getTransactionStats() {
-        // 1. 현재 날짜 기준 설정 (LocalDate 사용)
         LocalDate today = LocalDate.now();
 
-        // 2. 시간 경계값 계산 (LocalDateTime 변환)
-        // 오늘 시작: 2024-05-20 -> 2024-05-20T00:00:00
         LocalDateTime startOfToday = today.atStartOfDay();
 
-        // 이번 달 시작: 2024-05-20 -> 2024-05-01T00:00:00
         LocalDateTime startOfMonth = today.withDayOfMonth(1).atStartOfDay();
 
-        // 3. 데이터 조회 (Repository 호출)
         long totalTx = transactionRepository.count();
         long totalGMV = transactionRepository.sumTotalPrice();
 
-        // After 메서드는 해당 시간 '이후'를 조회하므로 00:00:00를 포함하려면
-        // 쿼리에서 >= (Greater than or Equal) 조건이 쓰이는지 확인해야 합니다.
         long dailyTx = transactionRepository.countByCreatedAtGreaterThanEqual(startOfToday);
         long monthlyTx = transactionRepository.countByCreatedAtGreaterThanEqual(startOfMonth);
 
@@ -80,7 +67,6 @@ public class AdminStatisticsService {
                 .build();
     }
 
-    /** 4. 상품 통계 */
     public ProductStatsResponse getProductStats() {
         LocalDateTime todayStart = LocalDate.now().atStartOfDay();
         LocalDateTime weekStart = LocalDate.now().minusDays(7).atStartOfDay();
@@ -88,26 +74,15 @@ public class AdminStatisticsService {
 
         long totalListings = productRepository.count();
 
-        // ※ ProductRepository에 아래 메서드 추가 필요:
-        //   long countByCreatedAtAfter(LocalDateTime dateTime);
         long dailyListings = productRepository.countByCreatedAtAfter(todayStart);
         long weeklyListings = productRepository.countByCreatedAtAfter(weekStart);
         long monthlyListings = productRepository.countByCreatedAtAfter(monthStart);
 
-        // 카테고리별 분포
-        // ※ ProductRepository에 추가 필요:
-        //   @Query("SELECT p.category, COUNT(p) FROM Product p GROUP BY p.category ORDER BY COUNT(p) DESC")
-        //   List<Object[]> countByCategory();
         List<CategoryCount> categoryDistribution = productRepository.countByCategory()
                 .stream()
                 .map(row -> new CategoryCount((String) row[0], (Long) row[1]))
                 .collect(Collectors.toList());
 
-        // 가격 분포
-        // ※ ProductRepository에 추가 필요:
-        //   long countByPriceLessThanEqual(int price);
-        //   long countByPriceBetween(int min, int max);
-        //   long countByPriceGreaterThan(int price);
         long lowPrice = productRepository.countByPriceLessThanEqual(50000);
         long midPrice = productRepository.countByPriceBetween(50001, 300000);
         long highPrice = productRepository.countByPriceGreaterThan(300000);
@@ -128,14 +103,12 @@ public class AdminStatisticsService {
                 .build();
     }
 
-    /** 5. 검색 & 탐색 통계 */
     public SearchStatsResponse getSearchStats() {
         List<KeywordCount> keywords = searchKeywordRepository.findTop10ByOrderByCountDesc()
                 .stream()
                 .map(sk -> new KeywordCount(sk.getKeyword(), sk.getCount()))
                 .collect(Collectors.toList());
 
-        // TODO: Wishlist 엔티티가 있다면 실제 데이터 조회
          long totalWishlist = wishlistRepository.count();
 
         return SearchStatsResponse.builder()
@@ -144,7 +117,6 @@ public class AdminStatisticsService {
                 .build();
     }
 
-    /** 6. 신고 통계 */
     public ReportStatsResponse getReportStats() {
         long totalReports = reportRepository.count();
         long pendingReports = reportRepository.countByStatus("PENDING");
@@ -153,8 +125,6 @@ public class AdminStatisticsService {
                 + reportRepository.countByStatus("SUSPENDED");
         long dismissed = reportRepository.countByStatus("DISMISSED");
 
-        // ※ UserRepository에 추가 필요:
-        //   long countByStatus(String status);
         long suspendedUsers = userRepository.countByStatus(Status.valueOf("SUSPENDED"));
         long blockedUsers = userRepository.countByStatus(Status.valueOf("BLOCKED"));
 

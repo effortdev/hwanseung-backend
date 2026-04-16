@@ -32,7 +32,6 @@ public class AdminReportService {
     private final UserRepository userRepository;
      private final ProductRepository productRepository;
 
-    /** 신고 목록 조회 */
     @Transactional(readOnly = true)
     public Map<String, Object> getReports(int page, int size, String keyword, String status, String type) {
         Page<Report> result = reportRepository.searchReports(
@@ -58,7 +57,6 @@ public class AdminReportService {
         return response;
     }
 
-    /** 신고 상세 조회 */
     @Transactional(readOnly = true)
     public DetailResponse getReportDetail(Long reportId) {
         Report report = reportRepository.findById(reportId)
@@ -66,7 +64,6 @@ public class AdminReportService {
         return toDetailResponse(report);
     }
 
-    /** 경고 처리 */
     @Transactional
     public void warnUser(Long reportId, String memo, String adminNickname) {
         Report report = findReport(reportId);
@@ -74,11 +71,8 @@ public class AdminReportService {
         addHistory(report, "WARNED", memo, adminNickname);
         reportRepository.save(report);
 
-        // TODO: 피신고자에게 경고 알림 발송
-        // notificationService.sendWarning(report.getReportedUserId(), memo);
     }
 
-    /** 계정 정지 처리 */
     @Transactional
     public void suspendUser(Long reportId, int days, String memo, String adminNickname) {
         Report report = findReport(reportId);
@@ -86,7 +80,6 @@ public class AdminReportService {
         addHistory(report, "SUSPENDED", memo, adminNickname);
         reportRepository.save(report);
 
-//         사용자 상태 변경
          User user = userRepository.findById(report.getReportedUserId())
                  .orElseThrow(() -> new NoSuchElementException("사용자를 찾을 수 없습니다."));
          user.setStatus(Status.valueOf("SUSPENDED"));
@@ -95,7 +88,6 @@ public class AdminReportService {
          userRepository.save(user);
     }
 
-    /** 기각 처리 */
     @Transactional
     public void dismissReport(Long reportId, String memo, String adminNickname) {
         Report report = findReport(reportId);
@@ -104,19 +96,15 @@ public class AdminReportService {
         reportRepository.save(report);
     }
 
-    /** 신고된 콘텐츠 삭제 */
     @Transactional
     public void deleteReportedContent(Long reportId) {
         Report report = findReport(reportId);
         if ("PRODUCT".equals(report.getType()) && report.getTargetProductId() != null) {
-            // productRepository.deleteById(report.getTargetProductId());
         }
-        // 상태 업데이트
         report.setStatus("RESOLVED");
         reportRepository.save(report);
     }
 
-    /** 정지 사용자 목록 */
     @Transactional(readOnly = true)
     public Map<String, Object> getSuspendedUsers(int page, int size, String keyword) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
@@ -128,7 +116,6 @@ public class AdminReportService {
         response.put("totalElements", userPage.getTotalElements());
         return response;
     }
-    // --- 헬퍼 ---
 
     private Report findReport(Long reportId) {
         return reportRepository.findById(reportId)
@@ -145,7 +132,6 @@ public class AdminReportService {
         report.getHistory().add(history);
     }
 
-    // --- 변환 ---
 
     private ListResponse toListResponse(Report r) {
         return ListResponse.builder()
@@ -161,10 +147,8 @@ public class AdminReportService {
     }
 
     private DetailResponse toDetailResponse(Report r) {
-        // 피신고자 누적 신고 수
         int reportedCount = (int) reportRepository.countByReportedUserId(r.getReportedUserId());
 
-        // 상품 정보 (상품 신고인 경우)
         TargetProductInfo productInfo = null;
         if ("PRODUCT".equals(r.getType()) && r.getTargetProductId() != null) {
              Product product = productRepository.findById(Math.toIntExact(r.getTargetProductId())).orElse(null);
@@ -173,7 +157,6 @@ public class AdminReportService {
              }
         }
 
-        // 처리 이력
         List<HistoryItem> history = r.getHistory().stream()
                 .map(h -> new HistoryItem(h.getAction(), h.getMemo(), h.getAdminNickname(), h.getCreatedAt()))
                 .collect(Collectors.toList());

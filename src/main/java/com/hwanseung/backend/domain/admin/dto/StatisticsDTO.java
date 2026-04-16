@@ -6,7 +6,6 @@ import java.util.List;
 
 public class StatisticsDTO {
 
-    /** 2. 사용자 통계 */
     @Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
     public static class UserStatsResponse {
         private long totalUsers;
@@ -14,7 +13,6 @@ public class StatisticsDTO {
         private long monthlyNewUsers;
     }
 
-    /** 3. 거래 통계 */
     @Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
     public static class TransactionStatsResponse {
         private long totalTransactions;
@@ -23,7 +21,6 @@ public class StatisticsDTO {
         private long monthlyTransactions;
     }
 
-    /** 4. 상품 통계 */
     @Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
     public static class ProductStatsResponse {
         private long dailyListings;
@@ -46,7 +43,6 @@ public class StatisticsDTO {
         private long count;
     }
 
-    /** 5. 검색 & 탐색 통계 */
     @Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
     public static class SearchStatsResponse {
         private List<KeywordCount> popularKeywords;
@@ -60,7 +56,6 @@ public class StatisticsDTO {
         private long count;
     }
 
-    /** 6. 신고 통계 */
     @Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
     public static class ReportStatsResponse {
         private long totalReports;

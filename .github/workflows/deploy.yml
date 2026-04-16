@@ -33,7 +33,5 @@ jobs:
 
             GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} \
             GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }} \
-            # 전체를 꺼버리는 down 명령어 삭제 (DB와 Redis를 안전하게 유지)
-            # 백엔드(backend) 컨테이너만 딱 짚어서 다시 빌드하고 재실행
             docker-compose rm -f -s backend
             docker-compose up -d --build backend

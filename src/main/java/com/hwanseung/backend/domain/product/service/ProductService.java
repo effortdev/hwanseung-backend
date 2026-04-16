@@ -37,19 +37,17 @@ public class ProductService {
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
 
-    // 🌟 [수정 포인트 1] 하드코딩 삭제하고 @Value로 경로 가져오기 (static 제거)
     @Value("${custom.upload-path}")
     private String baseUploadPath;
 
-    // 이미지 최대 5장
     private static final int MAX_IMAGE_COUNT = 5;
 
     public Integer createProduct(ProductCreateRequestDTO requestDTO, Authentication authentication) throws IOException {
 
         CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
 
-        String sellerId = loginUser.getUsername();   // 아이디
-        String sellerNickname = loginUser.getNickname(); // 닉네임
+        String sellerId = loginUser.getUsername();
+        String sellerNickname = loginUser.getNickname();
 
         Product product = Product.builder()
                 .title(requestDTO.getTitle())
@@ -64,7 +62,6 @@ public class ProductService {
 
         List<MultipartFile> images = requestDTO.getImages();
 
-        // 이미지 개수 제한
         if (images != null) {
             long validImageCount = images.stream()
                     .filter(image -> image != null && !image.isEmpty())
@@ -74,7 +71,6 @@ public class ProductService {
                 throw new IllegalArgumentException("상품 이미지는 최대 5장까지 업로드할 수 있습니다.");
             }
 
-            // 여러 장 저장
             for (MultipartFile image : images) {
                 if (image != null && !image.isEmpty()) {
                     ProductImage productImage = saveProductImage(image);
@@ -88,7 +84,6 @@ public class ProductService {
         return savedProduct.getProductId();
     }
 
-    // 상품 목록 조회
     @Transactional(readOnly = true)
     public List<ProductListResponseDTO> getProductList(String loginUserId) {
         List<Product> products = productRepository.findAllVisibleOrderBySaleStatusAndCreatedAtDesc();
@@ -118,7 +113,6 @@ public class ProductService {
                 .toList();
     }
 
-    // 메인페이지 인기 매물 조회
     @Transactional(readOnly = true)
     public List<ProductListResponseDTO> getPopularProducts(String loginUserId) {
         List<Product> products = productRepository.findAllVisibleSaleProductsOrderByCreatedAtDesc();
@@ -153,7 +147,6 @@ public class ProductService {
                 .toList();
     }
 
-    // 주변 매물
     @Transactional(readOnly = true)
     public List<ProductListResponseDTO> getNearbyProducts(double lat, double lng, double radius) {
         List<Product> nearbyProducts = productRepository.findNearbyProducts(lat, lng, radius);
@@ -172,7 +165,6 @@ public class ProductService {
                 .toList();
     }
 
-    // 상품 수정 이미지 수정 포함
     public void updateProduct(Integer productId, ProductUpdateRequestDTO requestDTO, Authentication authentication) throws IOException {
         CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
         String loginUserId = loginUser.getUsername();
@@ -196,7 +188,6 @@ public class ProductService {
                 requestDTO.getLocation()
         );
 
-        // 1) 기존 이미지 삭제
         List<Integer> deleteImageIds = requestDTO.getDeleteImageIds();
         if (deleteImageIds != null && !deleteImageIds.isEmpty()) {
             List<ProductImage> removeTargets = product.getProductImages().stream()
@@ -209,7 +200,6 @@ public class ProductService {
             }
         }
 
-        // 2) 새 이미지 추가
         List<MultipartFile> newImages = requestDTO.getNewImages();
         long validNewImageCount = 0;
 
@@ -234,7 +224,6 @@ public class ProductService {
         }
     }
 
-    // 상품 삭제 (soft delete)
     public void deleteProduct(Integer productId, Authentication authentication) {
         CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
         String loginUserId = loginUser.getUsername();
@@ -253,11 +242,9 @@ public class ProductService {
         product.deleteProduct();
     }
 
-    // 실제 파일 삭제
     private void deleteStoredFile(String storedName) {
         if (storedName == null || storedName.isBlank()) return;
 
-        // 🌟 [수정 포인트 2] 삭제할 때 baseUploadPath + "product/" 로 동적 경로 설정
         String uploadDir = baseUploadPath + "product/";
         File file = new File(uploadDir, storedName);
 
@@ -266,14 +253,11 @@ public class ProductService {
         }
     }
 
-    // 파일 저장 + ProductImage 엔티티 생성
     private ProductImage saveProductImage(MultipartFile image) throws IOException {
 
-        // 🌟 [수정 포인트 3] 저장할 때 baseUploadPath + "product/" 로 동적 경로 설정
         String uploadDir = baseUploadPath + "product/";
         File dir = new File(uploadDir);
 
-        // 폴더 없으면 생성
         if (!dir.exists()) {
             dir.mkdirs();
         }
@@ -284,7 +268,6 @@ public class ProductService {
         File dest = new File(dir, storedName);
         image.transferTo(dest);
 
-        // 브라우저 접근용 경로
         String imagePath = "/api/imgs/product/" + storedName;
 
         return ProductImage.builder()
@@ -294,7 +277,6 @@ public class ProductService {
                 .build();
     }
 
-    // 상품 상세 조회
     public ProductDetailResponseDTO getProductDetail(Integer productId) {
         Product product = productRepository.findByProductIdAndDeletedAtIsNull(productId)
                 .orElseThrow(() -> new RuntimeException("상품이 없거나 삭제된 상품입니다."));
@@ -304,7 +286,6 @@ public class ProductService {
         return ProductDetailResponseDTO.from(product);
     }
 
-    // 판매완료 처리
     public void markProductAsSoldOut(Integer productId, Authentication authentication) {
         CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
         String loginUserId = loginUser.getUsername();
@@ -323,7 +304,6 @@ public class ProductService {
         product.markAsSoldOut();
     }
 
-    // 예약중 처리
     public void markProductAsReserved(Integer productId, Authentication authentication) {
         CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
         String loginUserId = loginUser.getUsername();
@@ -346,7 +326,6 @@ public class ProductService {
         product.markAsReserved();
     }
 
-    // 예약해제 -> 판매중
     public void markProductAsSale(Integer productId, Authentication authentication) {
         CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
         String loginUserId = loginUser.getUsername();
@@ -369,19 +348,16 @@ public class ProductService {
         product.markAsSale();
     }
 
-    // 상품 총 갯수
     @Transactional(readOnly = true)
     public long getTotalProductCount() {
         return productRepository.count();
     }
 
-    // 판매 중인 상품 갯수
     @Transactional(readOnly = true)
     public long getActiveProductCount() {
         return productRepository.countByDeletedAtIsNull();
     }
 
-    // 내 판매 내역 조회
     @Transactional(readOnly = true)
     public List<ProductListResponseDTO> getMySalesList(String sellerId) {
         List<Product> myProducts = productRepository.findBySellerIdAndDeletedAtIsNullOrderByCreatedAtDesc(sellerId);
@@ -403,7 +379,6 @@ public class ProductService {
                 .toList();
     }
 
-    // 내 관심목록 조회
     @Transactional(readOnly = true)
     public List<ProductListResponseDTO> getWishlist(String username) {
         List<ProductLike> myLikes = productLikeRepository.findByUser_Username(username);

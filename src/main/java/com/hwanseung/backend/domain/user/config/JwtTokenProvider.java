@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 
-//JWT(JSON Web Token)의 생성, 분석, 유효성 검사 기능을 담당합니다.
 @Component
 public class JwtTokenProvider {
     @Value("${jwt.secret}")
@@ -46,7 +45,6 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public Long getUserIdFromToken(String token) {
         return Jwts.parser()
                 .setSigningKey(jwtSecretKey)
@@ -78,9 +76,8 @@ public class JwtTokenProvider {
                 .getBody()
                 .getExpiration();
     }
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public Boolean validateToken(String token) {
-        System.out.println("인증 토큰 유효성 체크");
         try {
             Jwts.parser().setSigningKey(jwtSecretKey).parseClaimsJws(token);
             return true;
@@ -104,8 +101,8 @@ public class JwtTokenProvider {
         return Jwts.builder()
                 .setSubject(user.getUsername())
                 .claim("user-id", user.getId())
-                .claim("role", user.getRole().name()) // 기존 권한 그대로 사용
-                .claim("status", user.getStatus().name()) // 업데이트된 상태 사용
+                .claim("role", user.getRole().name())
+                .claim("status", user.getStatus().name())
                 .claim("user-email", user.getEmail())
                 .setIssuedAt(new Date())
                 .setExpiration(expiryDate)

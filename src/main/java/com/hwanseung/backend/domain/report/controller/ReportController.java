@@ -16,7 +16,6 @@ public class ReportController {
 
     private final ReportService reportService;
 
-    // 상세페이지에서 신고 버튼 누를 때 중복 신고 여부 확인
     @GetMapping("/products/{productId}/check")
     public ResponseEntity<ReportCheckResponseDTO> checkProductReport(
             @PathVariable Long productId,

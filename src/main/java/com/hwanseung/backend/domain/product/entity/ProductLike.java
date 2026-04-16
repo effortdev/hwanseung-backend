@@ -27,14 +27,14 @@ public class ProductLike {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "product_like_id")
-    private Integer productLikeId; // 찜 PK
+    private Integer productLikeId;
 
-    // 찜한 상품
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    // 찜한 사용자
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

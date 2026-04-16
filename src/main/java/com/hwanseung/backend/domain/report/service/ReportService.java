@@ -31,7 +31,6 @@ public class ReportService {
             "COUNTERFEIT", "PROHIBITED", "OTHER"
     );
 
-    // 상세페이지 신고 버튼 누를 때 중복 신고 여부 확인
     @Transactional(readOnly = true)
     public ReportCheckResponseDTO checkProductReport(Long productId, Authentication authentication) {
 
@@ -45,7 +44,6 @@ public class ReportService {
         User reporter = userRepository.findByUsername(loginUser.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("유저 없음"));
 
-        // 본인 상품 신고 금지
         if (reporter.getUsername().equals(product.getSellerId())) {
             return ReportCheckResponseDTO.of(true, "본인 상품은 신고할 수 없습니다.");
         }
@@ -69,12 +67,10 @@ public class ReportService {
             Authentication authentication
     ) {
 
-        // 로그인 체크
         if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails loginUser)) {
             throw new IllegalArgumentException("로그인이 필요합니다.");
         }
 
-        // 카테고리 검증
         if (dto.getReasonCategory() == null || dto.getReasonCategory().trim().isEmpty()) {
             throw new IllegalArgumentException("신고 유형을 선택하세요.");
         }
@@ -89,24 +85,19 @@ public class ReportService {
             throw new IllegalArgumentException("신고 사유를 입력하세요.");
         }
 
-        // 상품 조회
         Product product = productRepository.findById(productId.intValue())
                 .orElseThrow(() -> new IllegalArgumentException("상품 없음"));
 
-        // 신고자
         User reporter = userRepository.findByUsername(loginUser.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("유저 없음"));
 
-        // 판매자
         User seller = userRepository.findByUsername(product.getSellerId())
                 .orElseThrow(() -> new IllegalArgumentException("판매자 없음"));
 
-        // 본인 신고 금지
         if (reporter.getUsername().equals(product.getSellerId())) {
             throw new IllegalArgumentException("본인 상품 신고 불가");
         }
 
-        // 중복 신고 금지
         if (reportRepository.existsByTypeAndReporterIdAndTargetProductId(
                 "PRODUCT",
                 reporter.getId(),
@@ -115,7 +106,6 @@ public class ReportService {
             throw new IllegalArgumentException("이미 신고한 상품입니다.");
         }
 
-        // 저장
         Report report = Report.builder()
                 .type("PRODUCT")
                 .status("PENDING")
@@ -132,7 +122,6 @@ public class ReportService {
 
         Report saved = reportRepository.save(report);
 
-        // 신고 횟수 증가
         Integer currentReportCount = product.getReportCount();
         product.setReportCount(currentReportCount == null ? 1 : currentReportCount + 1);
 

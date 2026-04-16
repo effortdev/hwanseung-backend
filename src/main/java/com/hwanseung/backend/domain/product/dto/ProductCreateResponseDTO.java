@@ -16,8 +16,8 @@ public class ProductCreateResponseDTO {
     private String location;
     private String content;
 
-    private String sellerId;         // ✅ userid
-    private String sellerNickname;   // ✅ nickname
+    private String sellerId;
+    private String sellerNickname;
 
     private String message;
 }

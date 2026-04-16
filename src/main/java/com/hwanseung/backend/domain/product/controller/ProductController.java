@@ -20,7 +20,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173") // 프론트 주소에 맞게 수정
+@CrossOrigin(origins = "http://localhost:5173")
 public class ProductController {
 
     private final ProductService productService;
@@ -39,8 +39,6 @@ public class ProductController {
         ));
     }
 
-    //내 찜목록
-    // ProductController.java 에 추가
     @GetMapping("/wishlist")
     public ResponseEntity<List<ProductListResponseDTO>> getWishlist(Authentication authentication) {
         CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
@@ -48,7 +46,6 @@ public class ProductController {
         return ResponseEntity.ok(wishlist);
     }
 
-    // 상품 목록 조회
     @GetMapping
     public ResponseEntity<List<ProductListResponseDTO>> getProductList(Authentication authentication) {
         String loginUserId = authentication != null ? authentication.getName() : null;
@@ -57,10 +54,8 @@ public class ProductController {
         return ResponseEntity.ok(productList);
     }
 
-    // 상품 상세 조회
     @GetMapping("/{productId}")
     public ResponseEntity<ProductDetailResponseDTO> getProductDetail(@PathVariable Integer productId) {
-        System.out.println("👉 상세 조회 요청 id = " + productId);
         ProductDetailResponseDTO productDetail = productService.getProductDetail(productId);
         return ResponseEntity.ok(productDetail);
     }
@@ -89,7 +84,6 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
-    // 상품 수정 multipart/form-data 로 받기
     @PutMapping(value = "/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateProduct(
             @PathVariable Integer productId,
@@ -104,7 +98,6 @@ public class ProductController {
         ));
     }
 
-    // 상품 삭제
     @DeleteMapping("/{productId}")
     public ResponseEntity<?> deleteProduct(
             @PathVariable Integer productId,
@@ -118,7 +111,6 @@ public class ProductController {
         ));
     }
 
-    // 판매완료 처리
     @PatchMapping("/{productId}/sold-out")
     public ResponseEntity<?> markProductAsSoldOut(
             @PathVariable Integer productId,
@@ -132,7 +124,6 @@ public class ProductController {
         ));
     }
 
-    // 예약중 처리
     @PatchMapping("/{productId}/reserved")
     public ResponseEntity<?> markProductAsReserved(
             @PathVariable Integer productId,
@@ -146,7 +137,6 @@ public class ProductController {
         ));
     }
 
-    // 예약해제 -> 판매중
     @PatchMapping("/{productId}/sale")
     public ResponseEntity<?> markProductAsSale(
             @PathVariable Integer productId,
@@ -160,7 +150,6 @@ public class ProductController {
         ));
     }
 
-    // 🌟 [추가] 내 판매 내역 API
     @GetMapping("/my-sales")
     public ResponseEntity<List<ProductListResponseDTO>> getMySalesList(Authentication authentication) {
 

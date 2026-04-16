@@ -25,15 +25,14 @@ public class ProductImage {
     private Product product;
 
     @Column(name = "original_name", nullable = false, length = 255)
-    private String originalName; // 원본 파일명
+    private String originalName;
 
     @Column(name = "stored_name", nullable = false, length = 255)
-    private String storedName; // 저장 파일명
+    private String storedName;
 
     @Column(name = "image_path", nullable = false, length = 255)
-    private String imagePath; // 예: /api/imgs/product/uuid_xxx.jpg
+    private String imagePath;
 
-    // Product.addProductImage()에서 사용
     public void setProduct(Product product) {
         this.product = product;
     }

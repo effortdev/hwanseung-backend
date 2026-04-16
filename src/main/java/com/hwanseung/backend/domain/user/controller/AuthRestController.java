@@ -101,7 +101,11 @@ public class AuthRestController {
             String phoneNumber = request.get("phoneNumber");
             authService.requestSmsVerification(phoneNumber);
             return ResponseEntity.ok("인증번호가 문자로 발송되었습니다.");
+        } catch (IllegalStateException e) {
+            // 중복된 번호이거나 비즈니스 로직 상 거절된 경우 (409 Conflict)
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         } catch (Exception e) {
+            // 그 외 서버 내부 오류 (500)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("SMS 발송 중 오류가 발생했습니다.");
         }
     }

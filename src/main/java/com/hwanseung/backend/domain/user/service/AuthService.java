@@ -73,7 +73,7 @@ public class AuthService {
         System.out.print("requestDto");
         System.out.println(requestDto);
         User user = this.userRepository.findByUsername(requestDto.getUsername()).orElseThrow(
-                () -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다. username = " + requestDto.getUsername()));
+                () -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다."));
 
         // 🌟 PENDING 상태라면 로그인을 막고 추가 인증 유도
         if (user.getStatus() == com.hwanseung.backend.domain.admin.dto.Status.PENDING) {
@@ -85,7 +85,7 @@ public class AuthService {
         }
 
         if (!passwordEncoder.matches(requestDto.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다. username = " + requestDto.getUsername());
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
         System.out.println("user:: "+user);
 

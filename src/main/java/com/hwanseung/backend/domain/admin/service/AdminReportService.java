@@ -9,6 +9,7 @@ import com.hwanseung.backend.domain.product.entity.Product;
 import com.hwanseung.backend.domain.product.repository.ProductRepository;
 import com.hwanseung.backend.domain.user.entity.User;
 import com.hwanseung.backend.domain.user.repository.UserRepository;
+import com.hwanseung.backend.domain.user.service.TrustScoreService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,6 +32,8 @@ public class AdminReportService {
     private final AdminReportRepository reportRepository;
     private final UserRepository userRepository;
      private final ProductRepository productRepository;
+    // 👇 TrustScoreService 의존성 추가
+    private final TrustScoreService trustScoreService;
 
     /** 신고 목록 조회 */
     @Transactional(readOnly = true)
@@ -93,6 +96,9 @@ public class AdminReportService {
          user.setSuspendedAt(LocalDateTime.now());
          user.setSuspendUntil(days == 0 ? null : LocalDateTime.now().plusDays(days));
          userRepository.save(user);
+
+        // 👇 [추가된 로직] 계정 정지 처분 시 피신고자 신뢰도 대폭 차감 (-50점 예시)
+        trustScoreService.updateTrustScore(report.getReportedUserId(), -50, "서비스 규정 위반으로 인한 계정 정지");
     }
 
     /** 기각 처리 */
@@ -102,6 +108,9 @@ public class AdminReportService {
         report.setStatus("DISMISSED");
         addHistory(report, "DISMISSED", memo, adminNickname);
         reportRepository.save(report);
+
+        // 👇 [추가된 로직] 관리자가 기각(무혐의/허위신고) 처리 시 신고자에게 페널티 차감 (-10점 예시)
+        trustScoreService.updateTrustScore(report.getReporterId(), -10, "허위/오인 신고로 인한 신뢰도 하락");
     }
 
     /** 신고된 콘텐츠 삭제 */

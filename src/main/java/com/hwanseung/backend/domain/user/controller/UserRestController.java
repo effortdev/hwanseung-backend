@@ -1,22 +1,29 @@
 package com.hwanseung.backend.domain.user.controller;
 
+import com.hwanseung.backend.domain.user.config.CustomUserDetails;
 import com.hwanseung.backend.domain.user.config.JwtTokenProvider;
+import com.hwanseung.backend.domain.user.dto.TrustScoreHistoryDto;
 import com.hwanseung.backend.domain.user.dto.UserRequestDTO;
 import com.hwanseung.backend.domain.user.dto.UserResponseDTO;
+import com.hwanseung.backend.domain.user.entity.TrustScoreHistory;
 import com.hwanseung.backend.domain.user.entity.User;
 import com.hwanseung.backend.domain.user.repository.UserRepository;
+import com.hwanseung.backend.domain.user.service.TrustScoreService;
 import com.hwanseung.backend.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,7 +33,7 @@ public class UserRestController {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
+    private final TrustScoreService  trustScoreService;
 
     /** 회원정보 조회 API */
     @GetMapping("/api/user")
@@ -128,5 +135,22 @@ public class UserRestController {
         }
     }
 
+    @GetMapping("/api/user/trust-score/history")
+    public ResponseEntity<List<TrustScoreHistoryDto>> getTrustScoreHistory(
+            @AuthenticationPrincipal CustomUserDetails userDetails) { // 구현체 타입 확인 필요
+
+        // 1. 서비스에서 엔티티 리스트 조회
+        List<TrustScoreHistory> histories = trustScoreService.getHistory(userDetails.getId());
+
+        // 2. 엔티티 리스트를 DTO 리스트로 변환 (매핑 로직)
+        // .stream()을 이용해 각 엔티티를 DTO의 정적 메서드로 전달합니다.
+        List<TrustScoreHistoryDto> dtoList = histories.stream()
+                .map(TrustScoreHistoryDto::fromEntity)
+                .collect(Collectors.toList());
+
+        // 3. 결과 반환 (return 매핑 로직)
+        // 데이터가 없을 경우 빈 리스트([])와 함께 200 OK가 나갑니다.
+        return ResponseEntity.ok(dtoList);
+    }
 
 }

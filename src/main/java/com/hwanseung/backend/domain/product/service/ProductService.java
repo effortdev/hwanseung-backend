@@ -14,6 +14,7 @@ import com.hwanseung.backend.domain.product.repository.ProductRepository;
 import com.hwanseung.backend.domain.user.config.CustomUserDetails;
 import com.hwanseung.backend.domain.user.entity.User;
 import com.hwanseung.backend.domain.user.repository.UserRepository;
+import com.hwanseung.backend.domain.user.service.TrustScoreService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value; // 💡 필수 임포트
 import org.springframework.security.core.Authentication;
@@ -36,6 +37,9 @@ public class ProductService {
     private final ProductLikeRepository productLikeRepository;
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
+
+    // 👇 TrustScoreService 의존성 추가
+    private final TrustScoreService trustScoreService;
 
     // 🌟 [수정 포인트 1] 하드코딩 삭제하고 @Value로 경로 가져오기 (static 제거)
     @Value("${custom.upload-path}")
@@ -321,6 +325,11 @@ public class ProductService {
         }
 
         product.markAsSoldOut();
+
+        // 👇 [추가된 로직] 판매 완료 시 판매자에게 신뢰도 점수 부여 (+10점 예시)
+        User seller = userRepository.findByUsername(loginUserId)
+                .orElseThrow(() -> new RuntimeException("판매자 정보를 찾을 수 없습니다."));
+        trustScoreService.updateTrustScore(seller.getId(), 10, "상품 판매 완료");
     }
 
     // 예약중 처리

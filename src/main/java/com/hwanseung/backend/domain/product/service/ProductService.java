@@ -555,28 +555,34 @@ public class ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("상품 없음"));
         System.out.println("ProductService 333 product ::: " + product);
+        try {
+            if (product.getBuyerUsername().equals(loginUserId) && product.getPrice() <= payBalance.getHwanseungPay()) {
+                System.out.println("ProductService 4444 포인트 조정 진입");
+                // 구매자 포인트 조정
+                PayHistory history = PayHistory.builder().userId(payBalance.getUserId()).amount(-product.getPrice()).type("PAYMENT").username(loginUserId).build();
+                em.persist(history);
+                payBalance.setHwanseungPay(payHistoryRepository.sumAmountByUsername(loginUserId));
+                em.persist(payBalance);
 
-        if(product.getBuyerUsername().equals(loginUserId) && product.getPrice() <= payBalance.getHwanseungPay()){
-            System.out.println("ProductService 4444 포인트 조정 진입");
-            // 구매자 포인트 조정
-            PayHistory history = PayHistory.builder().userId(payBalance.getUserId()).amount(-product.getPrice()).type("PAYMENT").username(loginUserId).build();
-            em.persist(history);
-            payBalance.setHwanseungPay(payHistoryRepository.sumAmountByUsername(loginUserId));
-            em.persist(payBalance);
+                optionalPayBalance = payBalanceRepository.findByUsername(product.getSellerId());
+                payBalance = optionalPayBalance.get();
 
-            optionalPayBalance = payBalanceRepository.findByUsername(product.getSellerId());
-            payBalance = optionalPayBalance.get();
+                history = PayHistory.builder().userId(payBalance.getUserId()).amount(product.getPrice()).type("HARP").username(product.getSellerId()).build();
+                em.persist(history);
+                payBalance.setHwanseungPay(payHistoryRepository.sumAmountByUsername(product.getSellerId()));
+                em.persist(payBalance);
 
-            history = PayHistory.builder().userId(payBalance.getUserId()).amount(product.getPrice()).type("HARP").username(product.getSellerId()).build();
-            em.persist(history);
-            payBalance.setHwanseungPay(payHistoryRepository.sumAmountByUsername(product.getSellerId()));
-            em.persist(payBalance);
+                product.setPayStatus(true);
+                System.out.println("ProductService 5555 포인트 조정 진입완료 전 product: " + product);
+                productRepository.save(product);
+                message = "결제가 완료되었습니다.";
+            }
 
-            product.setPayStatus(true);
-            productRepository.save(product);
-            message = "결제가 완료되었습니다.";
+        } catch (Exception e) {
+            System.out.println("결제 에러");
+            e.printStackTrace();
         }
-        System.out.println("ProductService 4444 포인트 조정 미진입");
+        System.out.println("ProductService 5555 포인트 조정 완료 또는 미진입");
         return message;
     }
 }

@@ -1,5 +1,6 @@
 package com.hwanseung.backend.domain.user.service;
 
+import com.hwanseung.backend.domain.user.dto.PayBalance;
 import jakarta.transaction.Transactional;
 import com.hwanseung.backend.domain.user.config.CustomUserDetails;
 import com.hwanseung.backend.domain.user.config.JwtTokenProvider;
@@ -13,7 +14,6 @@ import com.hwanseung.backend.domain.user.dto.UserRequestDTO;
 import com.hwanseung.backend.domain.user.repository.AuthRepository;
 import com.hwanseung.backend.domain.user.repository.UserRepository;
 
-import com.hwanseung.backend.domain.user.dto.PayBalance;
 import com.hwanseung.backend.domain.user.controller.PayBalanceRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -108,9 +108,7 @@ public class AuthService {
         requestDto.setRole(Role.ROLE_USER);
         requestDto.setPassword(passwordEncoder.encode(requestDto.getPassword()));//암호화가 이루어지는 곳
         User savedUser = this.userRepository.save(requestDto.toEntity());
-        PayBalance newBalance = new PayBalance();
-        newBalance.setUserId(String.valueOf(savedUser.getId()));
-        newBalance.setHwanseungPay(0);
+        PayBalance newBalance = PayBalance.builder().userId(savedUser.getId()).hwanseungPay(0).username(savedUser.getUsername()).build();
 
         this.payBalanceRepository.save(newBalance);
     }
@@ -161,9 +159,8 @@ public class AuthService {
 
                     User savedUser = userRepository.save(newUser);
 
-                    PayBalance newBalance = new PayBalance();
-                    newBalance.setUserId(String.valueOf(savedUser.getId()));
-                    newBalance.setHwanseungPay(0);
+                    // 지갑 생성 (기존 동일)
+                    PayBalance newBalance = PayBalance.builder().userId(savedUser.getId()).hwanseungPay(0).build();
                     payBalanceRepository.save(newBalance);
 
                     return savedUser;

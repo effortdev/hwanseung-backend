@@ -2,6 +2,7 @@ package com.hwanseung.backend.domain.product.dto;
 
 import com.hwanseung.backend.domain.product.entity.Product;
 import com.hwanseung.backend.domain.product.entity.ProductImage;
+import jakarta.persistence.Column;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -21,6 +22,9 @@ public class ProductListResponseDTO {
     private long likeCount;
     private long chatCount;
     private boolean liked;
+
+    private String buyerUsername;
+    private boolean payStatus;
 
     public static ProductListResponseDTO from(Product product, long likeCount, long chatCount, boolean liked) {
         String thumbnailUrl = null;
@@ -43,6 +47,8 @@ public class ProductListResponseDTO {
                 .likeCount(likeCount)
                 .chatCount(chatCount)
                 .liked(liked)
+                .buyerUsername(product.getBuyerUsername())
+                .payStatus(product.isPayStatus())
                 .build();
     }
 }

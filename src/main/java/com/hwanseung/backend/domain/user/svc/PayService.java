@@ -21,11 +21,11 @@ public class PayService {
         try {
             payHistoryRepository.save(history);
 
-            PayBalance balance = payBalanceRepository.findById(history.getUserId())
+            // 2. 해당 유저의 통장(Balance) 찾기
+            PayBalance balance = payBalanceRepository.findByUserId(history.getUserId())
                     .orElseGet(() -> {
-                        PayBalance newBalance = new PayBalance();
-                        newBalance.setUserId(history.getUserId());
-                        newBalance.setHwanseungPay(0);
+                        // 통장이 없는 신규 유저라면 새로 생성
+                        PayBalance newBalance = PayBalance.builder().userId(history.getUserId()).hwanseungPay(0).build();
                         return newBalance;
                     });
 
@@ -41,7 +41,8 @@ public class PayService {
     }
     @Transactional
     public boolean useHwanseungPay(String userId, PayUseVO useVO) {
-        PayBalance balance = payBalanceRepository.findById(userId)
+        // 1. 내 통장(Balance) 찾기
+        PayBalance balance = payBalanceRepository.findByUserId(Long.valueOf(userId))
                 .orElseThrow(() -> new IllegalArgumentException("지갑 정보가 존재하지 않습니다."));
 
         if (balance.getHwanseungPay() < useVO.getAmount()) {
@@ -52,13 +53,8 @@ public class PayService {
             balance.setHwanseungPay(balance.getHwanseungPay() - useVO.getAmount());
             payBalanceRepository.save(balance);
 
-            PayHistory history = new PayHistory();
-            history.setUserId(userId);
-            history.setImpUid("INTERNAL_PAY");
-            history.setMerchantUid(useVO.getMerchantUid());
-            history.setType("USE");
-            history.setAmount(useVO.getAmount());
-
+            // 4. 영수증(History) 기록
+            PayHistory history = PayHistory.builder().userId(Long.valueOf(userId)).impUid("INTERNAL_PAY").merchantUid(useVO.getMerchantUid()).type("USE").amount(useVO.getAmount()).build();
             payHistoryRepository.save(history);
 
             return true;
@@ -69,8 +65,8 @@ public class PayService {
     }
 
     @Transactional(readOnly = true)
-    public int getBalance(String userId) {
-        return payBalanceRepository.findById(userId)
+    public int getBalance(Long userId) {
+        return payBalanceRepository.findByUserId(userId)
                 .map(PayBalance::getHwanseungPay)
                 .orElse(0); // 통장이 없으면 0원
     }

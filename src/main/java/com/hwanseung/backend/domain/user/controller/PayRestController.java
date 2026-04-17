@@ -74,6 +74,7 @@ public class PayRestController {
             }
 
             Long userId = jwtTokenProvider.getUserIdFromToken(accessToken.substring(7));
+            String username = jwtTokenProvider.getUsernameFromToken(accessToken.substring(7));
             String iamportToken = getToken();
 
             if (iamportToken == null || iamportToken.isBlank()) {
@@ -106,12 +107,7 @@ public class PayRestController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("fail");
             }
 
-            PayHistory history = new PayHistory();
-            history.setUserId(String.valueOf(userId));
-            history.setImpUid(paidImpUid);
-            history.setMerchantUid(paidMerchantUid);
-            history.setType("CHARGE");
-            history.setAmount(actualPaidAmount);
+            PayHistory history = PayHistory.builder().userId(userId).username(username).impUid(paidImpUid).merchantUid(paidMerchantUid).type("CHARGE").amount(actualPaidAmount).build();
 
             boolean isSuccess = payService.chargeHwanseungPay(history);
 
@@ -166,7 +162,7 @@ public class PayRestController {
 
         Long userId = this.jwtTokenProvider.getUserIdFromToken(accessToken.substring(7));
 
-        int myBalance = payService.getBalance(String.valueOf(userId));
+        int myBalance = payService.getBalance(userId);
 
         return ResponseEntity.status(HttpStatus.OK).body(myBalance);
     }

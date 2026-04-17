@@ -69,6 +69,9 @@ public class Product {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "buyer_username")
+    private String buyerUsername;
+
     @Builder.Default
     @Column(name = "view_count", nullable = false)
     private int viewCount = 0;
@@ -102,20 +105,23 @@ public class Product {
         return this.deletedAt != null;
     }
 
-    public void markAsSoldOut() {
+    public void markAsSoldOut(String buyerUsername) {
         this.saleStatus = "SOLD_OUT";
+        this.buyerUsername = buyerUsername;
     }
 
     public boolean isSoldOut() {
         return "SOLD_OUT".equals(this.saleStatus);
     }
 
-    public void markAsReserved() {
+    public void markAsReserved(String buyerUsername) {
         this.saleStatus = "RESERVED";
+        this.buyerUsername = buyerUsername;
     }
 
     public void markAsSale() {
         this.saleStatus = "SALE";
+        this.buyerUsername = null;
     }
 
     public boolean isReserved() {

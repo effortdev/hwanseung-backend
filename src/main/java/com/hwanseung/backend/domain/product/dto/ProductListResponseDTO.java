@@ -24,7 +24,7 @@ public class ProductListResponseDTO {
     private boolean liked;
 
     private String buyerUsername;
-    private boolean payStatus;
+    private Boolean payStatus;
 
     public static ProductListResponseDTO from(Product product, long likeCount, long chatCount, boolean liked) {
         String thumbnailUrl = null;
@@ -48,7 +48,7 @@ public class ProductListResponseDTO {
                 .chatCount(chatCount)
                 .liked(liked)
                 .buyerUsername(product.getBuyerUsername())
-                .payStatus(product.isPayStatus())
+                .payStatus(product.getPayStatus() != null ? product.getPayStatus() : false)
                 .build();
     }
 }

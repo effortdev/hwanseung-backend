@@ -48,7 +48,7 @@ public class ProductListResponseDTO {
                 .chatCount(chatCount)
                 .liked(liked)
                 .buyerUsername(product.getBuyerUsername())
-                .payStatus(product.isPayStatus())
+                .payStatus(product.getPayStatus())
                 .build();
     }
 }

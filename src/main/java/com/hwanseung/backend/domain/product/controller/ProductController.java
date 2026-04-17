@@ -4,6 +4,7 @@ import com.hwanseung.backend.domain.product.dto.ProductCreateRequestDTO;
 import com.hwanseung.backend.domain.product.dto.ProductDetailResponseDTO;
 import com.hwanseung.backend.domain.product.dto.ProductListResponseDTO;
 import com.hwanseung.backend.domain.product.dto.ProductUpdateRequestDTO;
+import com.hwanseung.backend.domain.product.entity.Product;
 import com.hwanseung.backend.domain.product.service.ProductService;
 import com.hwanseung.backend.domain.user.config.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -160,6 +161,27 @@ public class ProductController {
         return ResponseEntity.ok(mySalesList);
     }
 
+    // 🌟 [추가] 내 구매 내역 API
+    @GetMapping("/my-payments")
+    public ResponseEntity<List<ProductListResponseDTO>> getMyPaymentsList(Authentication authentication) {
+        System.out.println("구매내역 확인");
+        String loginUserId = authentication.getName();
+        List<ProductListResponseDTO> mySalesList = productService.getMyPaymentsList(loginUserId);
+        return ResponseEntity.ok(mySalesList);
+    }
 
 
+    // 결제 완료 처리
+    @PatchMapping("/{productId}/payments")
+    public ResponseEntity<?> productAsPayment(
+            @PathVariable Integer productId,
+            Authentication authentication
+    ) {
+        String message = productService.productAsPayment(productId, authentication);
+
+        return ResponseEntity.ok(Map.of(
+                "message", message,
+                "productId", productId
+        ));
+    }
 }

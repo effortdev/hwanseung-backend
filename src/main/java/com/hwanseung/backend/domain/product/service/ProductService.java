@@ -12,10 +12,17 @@ import com.hwanseung.backend.domain.product.entity.ProductLike;
 import com.hwanseung.backend.domain.product.repository.ProductLikeRepository;
 import com.hwanseung.backend.domain.product.repository.ProductRepository;
 import com.hwanseung.backend.domain.user.config.CustomUserDetails;
+import com.hwanseung.backend.domain.user.controller.PayBalanceRepository;
+import com.hwanseung.backend.domain.user.controller.PayHistoryRepository;
+import com.hwanseung.backend.domain.user.dto.PayBalance;
+import com.hwanseung.backend.domain.user.dto.PayHistory;
 import com.hwanseung.backend.domain.user.entity.User;
 import com.hwanseung.backend.domain.user.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value; // 💡 필수 임포트
+import org.springframework.beans.factory.annotation.Value; 
+import org.springframework.data.repository.query.Param;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -394,5 +402,69 @@ public class ProductService {
                     return ProductListResponseDTO.from(product, likeCount, chatCount, true);
                 })
                 .toList();
+    }
+
+
+    private final PayHistoryRepository payHistoryRepository;
+    private final PayBalanceRepository payBalanceRepository;
+
+    @PersistenceContext
+    private EntityManager em;
+
+    @Transactional(readOnly = true)
+    public List<ProductListResponseDTO> getMyPaymentsList(String buyerId) {
+        List<Product> myProducts = productRepository.findByBuyerUsernameOrderByPayStatusAscCreatedAtDesc(buyerId);
+        User buyer = userRepository.findByUsername(buyerId).orElse(null);
+
+        return myProducts.stream()
+                .map(product -> {
+                    long likeCount = productLikeRepository.countByProduct(product);
+                    boolean liked = false;
+                    long chatCount = chatRoomRepository.countByItemIdAndRoomType(
+                            product.getProductId().longValue(),
+                            RoomType.TRADE
+                    );
+                    if (buyer != null) {
+                        liked = productLikeRepository.existsByProductAndUser(product, buyer);
+                    }
+                    return ProductListResponseDTO.from(product, likeCount, chatCount, liked);
+                })
+                .toList();
+    }
+
+
+    // 결제완료 처리
+    @Transactional
+    public String productAsPayment(Integer productId, Authentication authentication) {
+        String message = "포인트 잔액이 부족하여 결제가 되지 않았습니다. \n포인트 충전을 해 주세요.";
+
+        CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
+        String loginUserId = loginUser.getUsername();
+        Optional<PayBalance> optionalPayBalance = payBalanceRepository.findByUsername(loginUserId);
+        PayBalance payBalance = optionalPayBalance.get();
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("상품 없음"));
+
+        if(product.getBuyerUsername().equals(loginUserId) && product.getPrice() <= payBalance.getHwanseungPay()){
+            // 구매자 포인트 조정
+            PayHistory history = PayHistory.builder().userId(payBalance.getUserId()).amount(-product.getPrice()).type("PAYMENT").username(loginUserId).build();
+            em.persist(history);
+            payBalance.setHwanseungPay(payHistoryRepository.sumAmountByUsername(loginUserId));
+            em.persist(payBalance);
+
+            // 판매자 포인트 조정
+            optionalPayBalance = payBalanceRepository.findByUsername(product.getSellerId());
+            payBalance = optionalPayBalance.get();
+
+            history = PayHistory.builder().userId(payBalance.getUserId()).amount(product.getPrice()).type("HARP").username(product.getSellerId()).build();
+            em.persist(history);
+            payBalance.setHwanseungPay(payHistoryRepository.sumAmountByUsername(product.getSellerId()));
+            em.persist(payBalance);
+
+            product.setPayStatus(true);
+            productRepository.save(product);
+            message = "결제가 완료되었습니다.";
+        }
+        return message;
     }
 }

@@ -6,4 +6,5 @@ import lombok.Data;
 public class PayUseVO {
     private String merchantUid;
     private int amount;
+    private String username;
 }

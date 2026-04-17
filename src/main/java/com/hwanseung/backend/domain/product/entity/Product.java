@@ -14,6 +14,7 @@ import java.util.List;
 @Table(name = "product")
 @Getter
 @Setter
+@ToString(exclude = "productImages")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
@@ -76,6 +77,12 @@ public class Product {
     @Column(nullable = false)
     @Builder.Default
     private Integer reportCount = 0;
+
+    @Column(name="buyer_username")
+    private String buyerUsername;
+
+    @Column(name="pay_status")
+    private boolean payStatus;
 
     @Builder.Default
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)

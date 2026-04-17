@@ -1,9 +1,6 @@
 package com.hwanseung.backend.domain.product.controller;
 
-import com.hwanseung.backend.domain.product.dto.ProductCreateRequestDTO;
-import com.hwanseung.backend.domain.product.dto.ProductDetailResponseDTO;
-import com.hwanseung.backend.domain.product.dto.ProductListResponseDTO;
-import com.hwanseung.backend.domain.product.dto.ProductUpdateRequestDTO;
+import com.hwanseung.backend.domain.product.dto.*;
 import com.hwanseung.backend.domain.product.entity.Product;
 import com.hwanseung.backend.domain.product.service.ProductService;
 import com.hwanseung.backend.domain.user.config.CustomUserDetails;
@@ -61,7 +58,6 @@ public class ProductController {
         return ResponseEntity.ok(productDetail);
     }
 
-    // 메인페이지 인기 매물 조회
     @GetMapping("/popular")
     public ResponseEntity<List<ProductListResponseDTO>> getPopularProducts(Authentication authentication) {
         String loginUserId = authentication != null ? authentication.getName() : null;
@@ -112,12 +108,22 @@ public class ProductController {
         ));
     }
 
-    @PatchMapping("/{productId}/sold-out")
-    public ResponseEntity<?> markProductAsSoldOut(
+    @GetMapping("/{productId}/chat-buyers")
+    public ResponseEntity<List<ProductChatBuyerResponseDTO>> getChatBuyers(
             @PathVariable Integer productId,
             Authentication authentication
     ) {
-        productService.markProductAsSoldOut(productId, authentication);
+        List<ProductChatBuyerResponseDTO> buyers = productService.getChatBuyers(productId, authentication);
+        return ResponseEntity.ok(buyers);
+    }
+
+    @PatchMapping("/{productId}/sold-out")
+    public ResponseEntity<?> markProductAsSoldOut(
+            @PathVariable Integer productId,
+            @RequestBody ProductBuyerRequestDTO requestDTO,
+            Authentication authentication
+    ) {
+        productService.markProductAsSoldOut(productId, requestDTO, authentication);
 
         return ResponseEntity.ok(Map.of(
                 "message", "판매완료 처리되었습니다.",
@@ -128,13 +134,15 @@ public class ProductController {
     @PatchMapping("/{productId}/reserved")
     public ResponseEntity<?> markProductAsReserved(
             @PathVariable Integer productId,
+            @RequestBody ProductBuyerRequestDTO requestDTO,
             Authentication authentication
     ) {
-        productService.markProductAsReserved(productId, authentication);
+        productService.markProductAsReserved(productId, requestDTO, authentication);
 
         return ResponseEntity.ok(Map.of(
                 "message", "예약중 처리되었습니다.",
-                "productId", productId
+                "productId", productId,
+                "buyerUsername", requestDTO.getBuyerUsername()
         ));
     }
 

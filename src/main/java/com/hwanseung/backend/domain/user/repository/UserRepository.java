@@ -45,4 +45,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Page<User> findSuspendedUsers(@Param("keyword") String keyword, Pageable pageable);
 
     List<User> findByRoleIn(List<Role> roles);
+
+    List<User> findByUsernameIn(List<String> usernames);
 }

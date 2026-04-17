@@ -81,9 +81,6 @@ public class Product {
     @Builder.Default
     private Integer reportCount = 0;
 
-    @Column(name="buyer_username")
-    private String buyerUsername;
-
     @Column(name="pay_status")
     private boolean payStatus;
 

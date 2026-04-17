@@ -1,11 +1,9 @@
 package com.hwanseung.backend.domain.product.service;
 
+import com.hwanseung.backend.domain.chat.entity.ChatRoom;
 import com.hwanseung.backend.domain.chat.entity.RoomType;
 import com.hwanseung.backend.domain.chat.repository.ChatRoomRepository;
-import com.hwanseung.backend.domain.product.dto.ProductCreateRequestDTO;
-import com.hwanseung.backend.domain.product.dto.ProductDetailResponseDTO;
-import com.hwanseung.backend.domain.product.dto.ProductListResponseDTO;
-import com.hwanseung.backend.domain.product.dto.ProductUpdateRequestDTO;
+import com.hwanseung.backend.domain.product.dto.*;
 import com.hwanseung.backend.domain.product.entity.Product;
 import com.hwanseung.backend.domain.product.entity.ProductImage;
 import com.hwanseung.backend.domain.product.entity.ProductLike;
@@ -173,6 +171,49 @@ public class ProductService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<ProductChatBuyerResponseDTO> getChatBuyers(Integer productId, Authentication authentication) {
+        CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
+        String loginUserId = loginUser.getUsername();
+
+        Product product = productRepository.findByProductIdAndDeletedAtIsNull(productId)
+                .orElseThrow(() -> new RuntimeException("상품이 없거나 삭제된 상품입니다."));
+
+        if (!product.getSellerId().equals(loginUserId)) {
+            throw new RuntimeException("채팅 구매자 목록 조회 권한이 없습니다.");
+        }
+
+        List<ChatRoom> chatRooms = chatRoomRepository.findByItemIdAndSellerId(productId.longValue(), loginUserId);
+
+        if (chatRooms == null || chatRooms.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> buyerUsernames = chatRooms.stream()
+                .map(ChatRoom::getBuyerId)
+                .filter(username -> username != null && !username.isBlank())
+                .distinct()
+                .toList();
+
+        if (buyerUsernames.isEmpty()) {
+            return List.of();
+        }
+
+        List<User> users = userRepository.findByUsernameIn(buyerUsernames);
+
+        return buyerUsernames.stream()
+                .map(username -> {
+                    String nickname = users.stream()
+                            .filter(user -> username.equals(user.getUsername()))
+                            .map(User::getNickname)
+                            .findFirst()
+                            .orElse(username);
+
+                    return new ProductChatBuyerResponseDTO(username, nickname);
+                })
+                .toList();
+    }
+
     public void updateProduct(Integer productId, ProductUpdateRequestDTO requestDTO, Authentication authentication) throws IOException {
         CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
         String loginUserId = loginUser.getUsername();
@@ -294,12 +335,14 @@ public class ProductService {
         return ProductDetailResponseDTO.from(product);
     }
 
-    public void markProductAsSoldOut(Integer productId, Authentication authentication) {
+    public void markProductAsSoldOut(Integer productId,
+                                     ProductBuyerRequestDTO requestDTO,
+                                     Authentication authentication) {
         CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
         String loginUserId = loginUser.getUsername();
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("상품 없음"));
+                .orElseThrow(() -> new RuntimeException("상품이 없습니다."));
 
         if (product.getDeletedAt() != null) {
             throw new RuntimeException("삭제된 상품입니다.");
@@ -309,15 +352,43 @@ public class ProductService {
             throw new RuntimeException("판매완료 처리 권한이 없습니다.");
         }
 
-        product.markAsSoldOut();
+        String requestBuyerUsername = (requestDTO != null && requestDTO.getBuyerUsername() != null)
+                ? requestDTO.getBuyerUsername().trim()
+                : null;
+
+        String finalBuyerUsername =
+                (requestBuyerUsername != null && !requestBuyerUsername.isBlank())
+                        ? requestBuyerUsername
+                        : product.getBuyerUsername();
+
+        if (finalBuyerUsername == null || finalBuyerUsername.isBlank()) {
+            throw new RuntimeException("판매완료할 구매자 정보가 없습니다.");
+        }
+
+        boolean exists = chatRoomRepository
+                .findByRoomTypeAndItemIdAndBuyerIdAndSellerId(
+                        RoomType.TRADE,
+                        productId.longValue(),
+                        finalBuyerUsername,
+                        product.getSellerId()
+                )
+                .isPresent();
+
+        if (!exists) {
+            throw new RuntimeException("해당 사용자는 이 상품에 채팅한 사용자가 아닙니다.");
+        }
+
+        product.markAsSoldOut(finalBuyerUsername);
     }
 
-    public void markProductAsReserved(Integer productId, Authentication authentication) {
+    public void markProductAsReserved(Integer productId,
+                                      ProductBuyerRequestDTO requestDTO,
+                                      Authentication authentication) {
         CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
         String loginUserId = loginUser.getUsername();
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("상품 없음"));
+                .orElseThrow(() -> new RuntimeException("상품이 없습니다."));
 
         if (product.getDeletedAt() != null) {
             throw new RuntimeException("삭제된 상품입니다.");
@@ -331,7 +402,32 @@ public class ProductService {
             throw new RuntimeException("판매완료된 상품은 예약중으로 변경할 수 없습니다.");
         }
 
-        product.markAsReserved();
+        String buyerUsername = requestDTO.getBuyerUsername() == null
+                ? null
+                : requestDTO.getBuyerUsername().trim();
+
+        if (buyerUsername == null || buyerUsername.isBlank()) {
+            throw new RuntimeException("예약자를 선택해주세요.");
+        }
+
+        if (buyerUsername.equals(product.getSellerId())) {
+            throw new RuntimeException("판매자 본인은 예약자로 선택할 수 없습니다.");
+        }
+
+        boolean exists = chatRoomRepository
+                .findByRoomTypeAndItemIdAndBuyerIdAndSellerId(
+                        RoomType.TRADE,
+                        productId.longValue(),
+                        buyerUsername,
+                        product.getSellerId()
+                )
+                .isPresent();
+
+        if (!exists) {
+            throw new RuntimeException("해당 사용자는 이 상품에 채팅한 사용자가 아닙니다.");
+        }
+
+        product.markAsReserved(buyerUsername);
     }
 
     public void markProductAsSale(Integer productId, Authentication authentication) {
@@ -339,7 +435,7 @@ public class ProductService {
         String loginUserId = loginUser.getUsername();
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("상품 없음"));
+                .orElseThrow(() -> new RuntimeException("상품이 없습니다."));
 
         if (product.getDeletedAt() != null) {
             throw new RuntimeException("삭제된 상품입니다.");
@@ -432,8 +528,6 @@ public class ProductService {
                 .toList();
     }
 
-
-    // 결제완료 처리
     @Transactional
     public String productAsPayment(Integer productId, Authentication authentication) {
         String message = "포인트 잔액이 부족하여 결제가 되지 않았습니다. \n포인트 충전을 해 주세요.";
@@ -452,7 +546,6 @@ public class ProductService {
             payBalance.setHwanseungPay(payHistoryRepository.sumAmountByUsername(loginUserId));
             em.persist(payBalance);
 
-            // 판매자 포인트 조정
             optionalPayBalance = payBalanceRepository.findByUsername(product.getSellerId());
             payBalance = optionalPayBalance.get();
 

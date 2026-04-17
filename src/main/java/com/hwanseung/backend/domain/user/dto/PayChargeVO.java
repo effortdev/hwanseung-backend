@@ -6,10 +6,10 @@ import lombok.Data;
 @Data
 public class PayChargeVO {
     @JsonProperty("imp_uid")
-    private String impUid; // 🌟 자바 표준 이름으로 변경!
+    private String impUid;
 
     @JsonProperty("merchant_uid")
-    private String merchantUid; // 🌟 자바 표준 이름으로 변경!
+    private String merchantUid;
 
     private int amount;
 }

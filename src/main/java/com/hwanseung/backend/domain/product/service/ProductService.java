@@ -1,22 +1,27 @@
 package com.hwanseung.backend.domain.product.service;
 
+import com.hwanseung.backend.domain.chat.entity.ChatRoom;
 import com.hwanseung.backend.domain.chat.entity.RoomType;
 import com.hwanseung.backend.domain.chat.repository.ChatRoomRepository;
-import com.hwanseung.backend.domain.product.dto.ProductCreateRequestDTO;
-import com.hwanseung.backend.domain.product.dto.ProductDetailResponseDTO;
-import com.hwanseung.backend.domain.product.dto.ProductListResponseDTO;
-import com.hwanseung.backend.domain.product.dto.ProductUpdateRequestDTO;
+import com.hwanseung.backend.domain.product.dto.*;
 import com.hwanseung.backend.domain.product.entity.Product;
 import com.hwanseung.backend.domain.product.entity.ProductImage;
 import com.hwanseung.backend.domain.product.entity.ProductLike;
 import com.hwanseung.backend.domain.product.repository.ProductLikeRepository;
 import com.hwanseung.backend.domain.product.repository.ProductRepository;
 import com.hwanseung.backend.domain.user.config.CustomUserDetails;
+import com.hwanseung.backend.domain.user.controller.PayBalanceRepository;
+import com.hwanseung.backend.domain.user.controller.PayHistoryRepository;
+import com.hwanseung.backend.domain.user.dto.PayBalance;
+import com.hwanseung.backend.domain.user.dto.PayHistory;
 import com.hwanseung.backend.domain.user.entity.User;
 import com.hwanseung.backend.domain.user.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import com.hwanseung.backend.domain.user.service.TrustScoreService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value; // 💡 필수 임포트
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.repository.query.Param;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +31,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -38,22 +44,21 @@ public class ProductService {
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
 
-    // 👇 TrustScoreService 의존성 추가
+
     private final TrustScoreService trustScoreService;
 
-    // 🌟 [수정 포인트 1] 하드코딩 삭제하고 @Value로 경로 가져오기 (static 제거)
+
     @Value("${custom.upload-path}")
     private String baseUploadPath;
 
-    // 이미지 최대 5장
     private static final int MAX_IMAGE_COUNT = 5;
 
     public Integer createProduct(ProductCreateRequestDTO requestDTO, Authentication authentication) throws IOException {
 
         CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
 
-        String sellerId = loginUser.getUsername();   // 아이디
-        String sellerNickname = loginUser.getNickname(); // 닉네임
+        String sellerId = loginUser.getUsername();
+        String sellerNickname = loginUser.getNickname();
 
         Product product = Product.builder()
                 .title(requestDTO.getTitle())
@@ -68,7 +73,6 @@ public class ProductService {
 
         List<MultipartFile> images = requestDTO.getImages();
 
-        // 이미지 개수 제한
         if (images != null) {
             long validImageCount = images.stream()
                     .filter(image -> image != null && !image.isEmpty())
@@ -78,7 +82,6 @@ public class ProductService {
                 throw new IllegalArgumentException("상품 이미지는 최대 5장까지 업로드할 수 있습니다.");
             }
 
-            // 여러 장 저장
             for (MultipartFile image : images) {
                 if (image != null && !image.isEmpty()) {
                     ProductImage productImage = saveProductImage(image);
@@ -92,7 +95,6 @@ public class ProductService {
         return savedProduct.getProductId();
     }
 
-    // 상품 목록 조회
     @Transactional(readOnly = true)
     public List<ProductListResponseDTO> getProductList(String loginUserId) {
         List<Product> products = productRepository.findAllVisibleOrderBySaleStatusAndCreatedAtDesc();
@@ -122,7 +124,6 @@ public class ProductService {
                 .toList();
     }
 
-    // 메인페이지 인기 매물 조회
     @Transactional(readOnly = true)
     public List<ProductListResponseDTO> getPopularProducts(String loginUserId) {
         List<Product> products = productRepository.findAllVisibleSaleProductsOrderByCreatedAtDesc();
@@ -157,7 +158,6 @@ public class ProductService {
                 .toList();
     }
 
-    // 주변 매물
     @Transactional(readOnly = true)
     public List<ProductListResponseDTO> getNearbyProducts(double lat, double lng, double radius) {
         List<Product> nearbyProducts = productRepository.findNearbyProducts(lat, lng, radius);
@@ -176,7 +176,49 @@ public class ProductService {
                 .toList();
     }
 
-    // 상품 수정 이미지 수정 포함
+    @Transactional(readOnly = true)
+    public List<ProductChatBuyerResponseDTO> getChatBuyers(Integer productId, Authentication authentication) {
+        CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
+        String loginUserId = loginUser.getUsername();
+
+        Product product = productRepository.findByProductIdAndDeletedAtIsNull(productId)
+                .orElseThrow(() -> new RuntimeException("상품이 없거나 삭제된 상품입니다."));
+
+        if (!product.getSellerId().equals(loginUserId)) {
+            throw new RuntimeException("채팅 구매자 목록 조회 권한이 없습니다.");
+        }
+
+        List<ChatRoom> chatRooms = chatRoomRepository.findByItemIdAndSellerId(productId.longValue(), loginUserId);
+
+        if (chatRooms == null || chatRooms.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> buyerUsernames = chatRooms.stream()
+                .map(ChatRoom::getBuyerId)
+                .filter(username -> username != null && !username.isBlank())
+                .distinct()
+                .toList();
+
+        if (buyerUsernames.isEmpty()) {
+            return List.of();
+        }
+
+        List<User> users = userRepository.findByUsernameIn(buyerUsernames);
+
+        return buyerUsernames.stream()
+                .map(username -> {
+                    String nickname = users.stream()
+                            .filter(user -> username.equals(user.getUsername()))
+                            .map(User::getNickname)
+                            .findFirst()
+                            .orElse(username);
+
+                    return new ProductChatBuyerResponseDTO(username, nickname);
+                })
+                .toList();
+    }
+
     public void updateProduct(Integer productId, ProductUpdateRequestDTO requestDTO, Authentication authentication) throws IOException {
         CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
         String loginUserId = loginUser.getUsername();
@@ -200,7 +242,6 @@ public class ProductService {
                 requestDTO.getLocation()
         );
 
-        // 1) 기존 이미지 삭제
         List<Integer> deleteImageIds = requestDTO.getDeleteImageIds();
         if (deleteImageIds != null && !deleteImageIds.isEmpty()) {
             List<ProductImage> removeTargets = product.getProductImages().stream()
@@ -213,7 +254,6 @@ public class ProductService {
             }
         }
 
-        // 2) 새 이미지 추가
         List<MultipartFile> newImages = requestDTO.getNewImages();
         long validNewImageCount = 0;
 
@@ -238,7 +278,6 @@ public class ProductService {
         }
     }
 
-    // 상품 삭제 (soft delete)
     public void deleteProduct(Integer productId, Authentication authentication) {
         CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
         String loginUserId = loginUser.getUsername();
@@ -257,11 +296,9 @@ public class ProductService {
         product.deleteProduct();
     }
 
-    // 실제 파일 삭제
     private void deleteStoredFile(String storedName) {
         if (storedName == null || storedName.isBlank()) return;
 
-        // 🌟 [수정 포인트 2] 삭제할 때 baseUploadPath + "product/" 로 동적 경로 설정
         String uploadDir = baseUploadPath + "product/";
         File file = new File(uploadDir, storedName);
 
@@ -270,14 +307,11 @@ public class ProductService {
         }
     }
 
-    // 파일 저장 + ProductImage 엔티티 생성
     private ProductImage saveProductImage(MultipartFile image) throws IOException {
 
-        // 🌟 [수정 포인트 3] 저장할 때 baseUploadPath + "product/" 로 동적 경로 설정
         String uploadDir = baseUploadPath + "product/";
         File dir = new File(uploadDir);
 
-        // 폴더 없으면 생성
         if (!dir.exists()) {
             dir.mkdirs();
         }
@@ -288,7 +322,6 @@ public class ProductService {
         File dest = new File(dir, storedName);
         image.transferTo(dest);
 
-        // 브라우저 접근용 경로
         String imagePath = "/api/imgs/product/" + storedName;
 
         return ProductImage.builder()
@@ -298,7 +331,6 @@ public class ProductService {
                 .build();
     }
 
-    // 상품 상세 조회
     public ProductDetailResponseDTO getProductDetail(Integer productId) {
         Product product = productRepository.findByProductIdAndDeletedAtIsNull(productId)
                 .orElseThrow(() -> new RuntimeException("상품이 없거나 삭제된 상품입니다."));
@@ -308,13 +340,14 @@ public class ProductService {
         return ProductDetailResponseDTO.from(product);
     }
 
-    // 판매완료 처리
-    public void markProductAsSoldOut(Integer productId, Authentication authentication) {
+    public void markProductAsSoldOut(Integer productId,
+                                     ProductBuyerRequestDTO requestDTO,
+                                     Authentication authentication) {
         CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
         String loginUserId = loginUser.getUsername();
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("상품 없음"));
+                .orElseThrow(() -> new RuntimeException("상품이 없습니다."));
 
         if (product.getDeletedAt() != null) {
             throw new RuntimeException("삭제된 상품입니다.");
@@ -324,7 +357,33 @@ public class ProductService {
             throw new RuntimeException("판매완료 처리 권한이 없습니다.");
         }
 
-        product.markAsSoldOut();
+        String requestBuyerUsername = (requestDTO != null && requestDTO.getBuyerUsername() != null)
+                ? requestDTO.getBuyerUsername().trim()
+                : null;
+
+        String finalBuyerUsername =
+                (requestBuyerUsername != null && !requestBuyerUsername.isBlank())
+                        ? requestBuyerUsername
+                        : product.getBuyerUsername();
+
+        if (finalBuyerUsername == null || finalBuyerUsername.isBlank()) {
+            throw new RuntimeException("판매완료할 구매자 정보가 없습니다.");
+        }
+
+        boolean exists = chatRoomRepository
+                .findByRoomTypeAndItemIdAndBuyerIdAndSellerId(
+                        RoomType.TRADE,
+                        productId.longValue(),
+                        finalBuyerUsername,
+                        product.getSellerId()
+                )
+                .isPresent();
+
+        if (!exists) {
+            throw new RuntimeException("해당 사용자는 이 상품에 채팅한 사용자가 아닙니다.");
+        }
+
+        product.markAsSoldOut(finalBuyerUsername);
 
         // 👇 [추가된 로직] 판매 완료 시 판매자에게 신뢰도 점수 부여 (+10점 예시)
         User seller = userRepository.findByUsername(loginUserId)
@@ -332,13 +391,14 @@ public class ProductService {
         trustScoreService.updateTrustScore(seller.getId(), 10, "상품 판매 완료");
     }
 
-    // 예약중 처리
-    public void markProductAsReserved(Integer productId, Authentication authentication) {
+    public void markProductAsReserved(Integer productId,
+                                      ProductBuyerRequestDTO requestDTO,
+                                      Authentication authentication) {
         CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
         String loginUserId = loginUser.getUsername();
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("상품 없음"));
+                .orElseThrow(() -> new RuntimeException("상품이 없습니다."));
 
         if (product.getDeletedAt() != null) {
             throw new RuntimeException("삭제된 상품입니다.");
@@ -352,16 +412,44 @@ public class ProductService {
             throw new RuntimeException("판매완료된 상품은 예약중으로 변경할 수 없습니다.");
         }
 
-        product.markAsReserved();
+        String buyerUsername = requestDTO.getBuyerUsername() == null
+                ? null
+                : requestDTO.getBuyerUsername().trim();
+
+        if (buyerUsername == null || buyerUsername.isBlank()) {
+            throw new RuntimeException("예약자를 선택해주세요.");
+        }
+
+        if (buyerUsername.equals(product.getSellerId())) {
+            throw new RuntimeException("판매자 본인은 예약자로 선택할 수 없습니다.");
+        }
+
+        boolean exists = chatRoomRepository
+                .findByRoomTypeAndItemIdAndBuyerIdAndSellerId(
+                        RoomType.TRADE,
+                        productId.longValue(),
+                        buyerUsername,
+                        product.getSellerId()
+                )
+                .isPresent();
+
+        if (!exists) {
+            throw new RuntimeException("해당 사용자는 이 상품에 채팅한 사용자가 아닙니다.");
+        }
+
+        product.markAsReserved(buyerUsername);
+
+        User seller = userRepository.findByUsername(loginUserId)
+                .orElseThrow(() -> new RuntimeException("판매자 정보를 찾을 수 없습니다."));
+        trustScoreService.updateTrustScore(seller.getId(), 10, "상품 판매 완료");
     }
 
-    // 예약해제 -> 판매중
     public void markProductAsSale(Integer productId, Authentication authentication) {
         CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
         String loginUserId = loginUser.getUsername();
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("상품 없음"));
+                .orElseThrow(() -> new RuntimeException("상품이 없습니다."));
 
         if (product.getDeletedAt() != null) {
             throw new RuntimeException("삭제된 상품입니다.");
@@ -378,19 +466,16 @@ public class ProductService {
         product.markAsSale();
     }
 
-    // 상품 총 갯수
     @Transactional(readOnly = true)
     public long getTotalProductCount() {
         return productRepository.count();
     }
 
-    // 판매 중인 상품 갯수
     @Transactional(readOnly = true)
     public long getActiveProductCount() {
         return productRepository.countByDeletedAtIsNull();
     }
 
-    // 내 판매 내역 조회
     @Transactional(readOnly = true)
     public List<ProductListResponseDTO> getMySalesList(String sellerId) {
         List<Product> myProducts = productRepository.findBySellerIdAndDeletedAtIsNullOrderByCreatedAtDesc(sellerId);
@@ -412,7 +497,6 @@ public class ProductService {
                 .toList();
     }
 
-    // 내 관심목록 조회
     @Transactional(readOnly = true)
     public List<ProductListResponseDTO> getWishlist(String username) {
         List<ProductLike> myLikes = productLikeRepository.findByUser_Username(username);
@@ -428,5 +512,66 @@ public class ProductService {
                     return ProductListResponseDTO.from(product, likeCount, chatCount, true);
                 })
                 .toList();
+    }
+
+
+    private final PayHistoryRepository payHistoryRepository;
+    private final PayBalanceRepository payBalanceRepository;
+
+    @PersistenceContext
+    private EntityManager em;
+
+    @Transactional(readOnly = true)
+    public List<ProductListResponseDTO> getMyPaymentsList(String buyerId) {
+        List<Product> myProducts = productRepository.findByBuyerUsernameOrderByPayStatusAscCreatedAtDesc(buyerId);
+        User buyer = userRepository.findByUsername(buyerId).orElse(null);
+
+        return myProducts.stream()
+                .map(product -> {
+                    long likeCount = productLikeRepository.countByProduct(product);
+                    boolean liked = false;
+                    long chatCount = chatRoomRepository.countByItemIdAndRoomType(
+                            product.getProductId().longValue(),
+                            RoomType.TRADE
+                    );
+                    if (buyer != null) {
+                        liked = productLikeRepository.existsByProductAndUser(product, buyer);
+                    }
+                    return ProductListResponseDTO.from(product, likeCount, chatCount, liked);
+                })
+                .toList();
+    }
+
+    @Transactional
+    public String productAsPayment(Integer productId, Authentication authentication) {
+        String message = "포인트 잔액이 부족하여 결제가 되지 않았습니다. \n포인트 충전을 해 주세요.";
+
+        CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
+        String loginUserId = loginUser.getUsername();
+        Optional<PayBalance> optionalPayBalance = payBalanceRepository.findByUsername(loginUserId);
+        PayBalance payBalance = optionalPayBalance.get();
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("상품 없음"));
+
+        if(product.getBuyerUsername().equals(loginUserId) && product.getPrice() <= payBalance.getHwanseungPay()){
+            // 구매자 포인트 조정
+            PayHistory history = PayHistory.builder().userId(payBalance.getUserId()).amount(-product.getPrice()).type("PAYMENT").username(loginUserId).build();
+            em.persist(history);
+            payBalance.setHwanseungPay(payHistoryRepository.sumAmountByUsername(loginUserId));
+            em.persist(payBalance);
+
+            optionalPayBalance = payBalanceRepository.findByUsername(product.getSellerId());
+            payBalance = optionalPayBalance.get();
+
+            history = PayHistory.builder().userId(payBalance.getUserId()).amount(product.getPrice()).type("HARP").username(product.getSellerId()).build();
+            em.persist(history);
+            payBalance.setHwanseungPay(payHistoryRepository.sumAmountByUsername(product.getSellerId()));
+            em.persist(payBalance);
+
+            product.setPayStatus(true);
+            productRepository.save(product);
+            message = "결제가 완료되었습니다.";
+        }
+        return message;
     }
 }

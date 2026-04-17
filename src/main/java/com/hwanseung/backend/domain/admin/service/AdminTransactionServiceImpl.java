@@ -19,12 +19,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * Product 테이블을 거래 관점으로 조회하는 관리자 서비스 구현체.
- *
- *  - "완료된 거래" 기준: sale_status = 'SOLD_OUT'
- *  - amount(금액) 기준:  price 컬럼
- */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -57,7 +51,6 @@ public class AdminTransactionServiceImpl implements AdminTransactionService {
         if (o instanceof LocalDateTime ldt) {
             return ldt;
         }
-        // 일부 드라이버가 java.util.Date 등을 반환할 수 있어 방어
         if (o instanceof java.util.Date d) {
             return new Timestamp(d.getTime()).toLocalDateTime();
         }
@@ -107,14 +100,14 @@ public class AdminTransactionServiceImpl implements AdminTransactionService {
         List<Object[]> rows = repo.findList(from, to, size, page * size);
         List<TransactionListItemDTO> content = rows.stream()
                 .map(r -> new TransactionListItemDTO(
-                        ((Number) r[0]).intValue(),   // product_id
-                        (String) r[1],                 // seller_id
-                        (String) r[2],                 // seller_nickname
-                        (String) r[3],                 // title
-                        (String) r[4],                 // category
-                        toLong(r[5]),                  // price -> amount
-                        (String) r[6],                 // sale_status -> status
-                        toLocalDateTime(r[7])))        // created_at
+                        ((Number) r[0]).intValue(),
+                        (String) r[1],
+                        (String) r[2],
+                        (String) r[3],
+                        (String) r[4],
+                        toLong(r[5]),
+                        (String) r[6],
+                        toLocalDateTime(r[7])))
                 .toList();
 
         long total = repo.countList(from, to);

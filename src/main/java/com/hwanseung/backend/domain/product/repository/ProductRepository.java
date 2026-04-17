@@ -1,5 +1,6 @@
 package com.hwanseung.backend.domain.product.repository;
 
+import com.hwanseung.backend.domain.product.dto.ProductListResponseDTO;
 import com.hwanseung.backend.domain.product.entity.Product;
 import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.domain.Page;
@@ -13,22 +14,18 @@ import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Integer> {
 
-    // 삭제되지 않은 상품만 최신순 조회
     List<Product> findByDeletedAtIsNullOrderByCreatedAtDesc();
 
-    // ProductRepository.java 안에 추가
     List<Product> findBySellerIdOrderByCreatedAtDesc(String sellerId);
-    //sellerId가져오기(product테이블)
 
-    //삭제된 데이터 확인 및 가리기
     List<Product> findBySellerIdAndDeletedAtIsNullOrderByCreatedAtDesc(String sellerId);
+
+    List<Product> findByBuyerUsernameOrderByPayStatusAscCreatedAtDesc(String buyerId);
 
     // 1. 전체 상품 개수 (기본 제공)
     long count();
 
-    // deleted_at 컬럼이 null인 데이터만 카운트
     long countByDeletedAtIsNull();
-    // ==========================================
     long countByCreatedAtAfter(LocalDateTime dateTime);
     long countByPriceLessThanEqual(int price);
     long countByPriceBetween(int min, int max);
@@ -39,7 +36,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     List<Object[]> countByCategory();
 
     @Query("SELECT p FROM Product p WHERE " +
-            "p.deletedAt IS NULL " + // Soft Delete된 데이터 목록에서 제외
+            "p.deletedAt IS NULL " +
             "AND (:keyword IS NULL OR p.title LIKE %:keyword% OR p.location LIKE %:keyword%) " +
             "AND (:status IS NULL OR p.saleStatus = :status) " +
             "AND (:category IS NULL OR p.category = :category)")
@@ -47,9 +44,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
                                  @Param("status") String status,
                                  @Param("category") String category,
                                  Pageable pageable);
-    // ==========================================
 
-    // 판매중 먼저, 판매완료 아래, 그 안에서 최신순
     @Query("""
         select p
         from Product p
@@ -60,10 +55,8 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     """)
     List<Product> findAllVisibleOrderBySaleStatusAndCreatedAtDesc();
 
-    // 삭제되지 않은 상품 단건 조회
     Optional<Product> findByProductIdAndDeletedAtIsNull(Integer productId);
 
-    // 메인페이지 인기 매물 후보
     @Query("""
         select p
         from Product p
@@ -74,8 +67,6 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     List<Product> findAllVisibleSaleProductsOrderByCreatedAtDesc();
 
 
-    // 🌟 내 주변 매물 찾기 쿼리 (Haversine 공식)
-    // 6371은 지구의 반지름(km)입니다.
     @Query(value = """
         SELECT * FROM product p
         WHERE p.deleted_at IS NULL
@@ -98,8 +89,4 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     long countBySaleStatusAndDeletedAtIsNull(String sale);
 
 
-//    @Modifying
-//    @Transactional // Service 계층에서 처리한다면 생략 가능하지만, 안전을 위해 권장
-//    @Query("UPDATE Product p SET p.category = null WHERE p.category.id = :categoryId")
-//    void clearCategoryByCategoryId(@Param("categoryId") String id);
 }

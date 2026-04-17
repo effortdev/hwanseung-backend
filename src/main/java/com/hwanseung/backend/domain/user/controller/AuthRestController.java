@@ -15,19 +15,16 @@ import java.util.Map;
 
 @RequiredArgsConstructor
 @RestController
-//@CrossOrigin(origins = "http://localhost:5173")
 public class AuthRestController {
     private final AuthService authService;
     private final UserService userService;
 
-    /** 로그인 API */
     @PostMapping("/api/auth/login")
     public ResponseEntity<?> login(@RequestBody AuthRequestDTO requestDto) {
         try {
             AuthResponseDTO responseDto = this.authService.login(requestDto);
             return ResponseEntity.ok(responseDto);
         } catch (UsernameNotFoundException | IllegalArgumentException e) {
-            // 🌟 "message"라는 키값에 에러 내용을 담아 보냅니다.
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
@@ -36,7 +33,6 @@ public class AuthRestController {
         }
     }
 
-    /** 회원가입 API */
     @PostMapping("/api/auth/signup")
     public ResponseEntity<?> singUp(@RequestBody UserRequestDTO requestDto) {
         System.out.println("requestDto: "+requestDto);
@@ -45,42 +41,36 @@ public class AuthRestController {
     }
 
 
-    /** 토큰갱신 API */
     @GetMapping("/api/auth/refresh")
     public ResponseEntity<?> refreshToken(@RequestHeader("REFRESH_TOKEN") String refreshToken) {
         String newAccessToken = this.authService.refreshToken(refreshToken);
         return ResponseEntity.status(HttpStatus.OK).body(newAccessToken);
     }
 
-    // 아이디 중복 체크
     @GetMapping("/api/auth/check-username")
     public ResponseEntity<Map<String, Boolean>> checkUserid(@RequestParam("username") String username) {
         boolean isDuplicate = userService.isUseridDuplicate(username);
         return ResponseEntity.ok(Map.of("isDuplicate", isDuplicate));
     }
 
-    // 닉네임 중복 체크
     @GetMapping("/api/auth/check-nickname")
     public ResponseEntity<Map<String, Boolean>> checkNickname(@RequestParam("nickname") String nickname) {
         boolean isDuplicate = userService.isNicknameDuplicate(nickname);
         return ResponseEntity.ok(Map.of("isDuplicate", isDuplicate));
     }
 
-    // 이메일 중복 체크(개발용 우회로직)
     @GetMapping("/api/auth/check-email")
     public ResponseEntity<Map<String, Boolean>> checkEmail(@RequestParam("email") String email) {
         boolean isDuplicate = userService.isEmailDuplicate(email);
         return ResponseEntity.ok(Map.of("isDuplicate", isDuplicate));
     }
 
-    // 연락처 중복 체크(개발용 우회로직)
     @GetMapping("/api/auth/check-contact")
     public ResponseEntity<Map<String, Boolean>> checkContact(@RequestParam("contact") String contact) {
         boolean isDuplicate = userService.isContactDuplicate(contact);
         return ResponseEntity.ok(Map.of("isDuplicate", isDuplicate));
     }
 
-    /** 1. 이메일 인증번호 발송 */
     @PostMapping("/api/auth/email/send-code")
     public ResponseEntity<?> sendEmailCode(@RequestBody Map<String, String> request) {
         try {
@@ -94,7 +84,6 @@ public class AuthRestController {
         }
     }
 
-    /** 2. SMS 인증번호 발송 */
     @PostMapping("/api/auth/sms/send-code")
     public ResponseEntity<?> sendSmsCode(@RequestBody Map<String, String> request) {
         try {
@@ -102,19 +91,16 @@ public class AuthRestController {
             authService.requestSmsVerification(phoneNumber);
             return ResponseEntity.ok("인증번호가 문자로 발송되었습니다.");
         } catch (IllegalStateException e) {
-            // 중복된 번호이거나 비즈니스 로직 상 거절된 경우 (409 Conflict)
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         } catch (Exception e) {
-            // 그 외 서버 내부 오류 (500)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("SMS 발송 중 오류가 발생했습니다.");
         }
     }
 
-    /** 3. 인증번호 검증 (공통) */
     @PostMapping("/api/auth/verify-code")
     public ResponseEntity<?> verifyCode(@RequestBody Map<String, String> request) {
-        String key = request.get("key");   // email 또는 phoneNumber
-        String code = request.get("code"); // 사용자가 입력한 6자리 번호
+        String key = request.get("key");
+        String code = request.get("code");
 
         boolean isVerified = authService.checkVerification(key, code);
 
@@ -129,7 +115,6 @@ public class AuthRestController {
     public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> data) {
         try {
             String idTokenString = data.get("token");
-            // 핵심 로직은 서비스로 위임
             AuthResponseDTO responseDto = authService.googleLogin(idTokenString);
             return ResponseEntity.ok(responseDto);
         } catch (Exception e) {

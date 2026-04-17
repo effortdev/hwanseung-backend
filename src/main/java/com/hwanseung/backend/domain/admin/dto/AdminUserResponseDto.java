@@ -20,7 +20,7 @@ public class AdminUserResponseDto {
                 .username(user.getUsername())
                 .name(user.getName())
                 .nickname(user.getNickname())
-                .role(user.getRole().name()) // "ROLE_SUPER" 형태로 반환
+                .role(user.getRole().name())
                 .build();
     }
 }

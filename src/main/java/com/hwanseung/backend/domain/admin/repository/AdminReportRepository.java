@@ -9,7 +9,6 @@ import org.springframework.data.repository.query.Param;
 
 public interface AdminReportRepository extends JpaRepository<Report, Long> {
 
-    /** 키워드 + 상태 + 유형 복합 검색 */
     @Query("SELECT r FROM Report r WHERE " +
            "(:keyword = '' OR r.reporterNickname LIKE %:keyword% OR r.reportedNickname LIKE %:keyword% OR r.reason LIKE %:keyword%) " +
            "AND (:status = '' OR r.status = :status) " +

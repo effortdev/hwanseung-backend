@@ -7,7 +7,6 @@ import java.util.List;
 
 public class AdminProductDTO {
 
-    /** 상품 목록 응답 */
     @Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
     public static class ListResponse {
         private Long productId;
@@ -22,7 +21,6 @@ public class AdminProductDTO {
         private LocalDateTime createdAt;
     }
 
-    /** 상품 상세 응답 */
     @Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
     public static class DetailResponse {
         private Long productId;
@@ -55,19 +53,16 @@ public class AdminProductDTO {
         private LocalDateTime createdAt;
     }
 
-    /** 반려/숨김 사유 요청 */
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor
     public static class ReasonRequest {
         private String reason;
     }
 
-    /** 일괄 처리 요청 */
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor
     public static class BulkRequest {
         private List<Integer> productIds;
     }
 
-    /** 요약 카운트 */
     @Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
     public static class SummaryCount {
         private long total;

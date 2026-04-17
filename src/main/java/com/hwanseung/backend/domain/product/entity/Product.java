@@ -14,6 +14,7 @@ import java.util.List;
 @Table(name = "product")
 @Getter
 @Setter
+@ToString(exclude = "productImages")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
@@ -23,18 +24,17 @@ public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "product_id")
-    private Integer productId; // 상품 고유번호
+    private Integer productId;
 
     @Column(name = "title", nullable = false, length = 100)
-    private String title; // 상품명
+    private String title;
 
     @Column(name = "category", nullable = false, length = 50)
     private String category;
 
     @Column(name = "price", nullable = false)
-    private int price; // 가격
+    private int price;
 
-    // 🌟 새로 추가하는 위도/경도 컬럼
     @Column(name = "lat")
     private Double lat;
 
@@ -44,55 +44,53 @@ public class Product {
 
     @Lob
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
-    private String content; // 상품 설명 (TEXT로 저장)
+    private String content;
 
     @Column(name = "seller_id", nullable = false, length = 50)
-    private String sellerId; // 판매자 아이디
+    private String sellerId;
 
     @Column(name = "seller_nickname", nullable = false, length = 50)
-    private String sellerNickname; // 판매자 닉네임
+    private String sellerNickname;
 
     @Column(name = "location", nullable = false, length = 100)
-    private String location; // 거래 지역
+    private String location;
 
     @Builder.Default
     @Column(name = "sale_status", nullable = false, length = 20)
-    private String saleStatus = "SALE"; // 판매상태 SALE / SOLD_OUT / RESERVED
+    private String saleStatus = "SALE";
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt; // 생성일
+    private LocalDateTime createdAt;
 
     @LastModifiedDate
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt; // 수정일
+    private LocalDateTime updatedAt;
 
     @Column(name = "deleted_at")
-    private LocalDateTime deletedAt; // 삭제일
+    private LocalDateTime deletedAt;
 
-    // 🌟 [여기 추가!] DB의 view_count 컬럼과 매핑하고 기본값을 0으로 설정
+    @Column(name = "buyer_username")
+    private String buyerUsername;
+
     @Builder.Default
     @Column(name = "view_count", nullable = false)
-    private int viewCount = 0; // 조회수
+    private int viewCount = 0;
 
     @Column(nullable = false)
     @Builder.Default
     private Integer reportCount = 0;
 
-    // 상품 1개 : 이미지 여러 개
+    @Column(name="pay_status")
+    private Boolean payStatus;
+
     @Builder.Default
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImage> productImages = new ArrayList<>();
 
-    /**
-     * 관리자에 의한 숨김 사유
-     * - 상태가 'HIDDEN'일 때만 값이 존재하도록 비즈니스 로직에서 제어
-     * - 사유가 길어질 수 있으므로 충분한 길이를 확보하거나 TEXT 타입 권장
-     */
-    @Column(name = "hide_reason", length = 500) // 일반적인 사유는 500자면 충분하나, 아주 길다면 columnDefinition = "TEXT" 사용
+    @Column(name = "hide_reason", length = 500)
     private String hideReason;
 
-    // 수정
     public void updateProduct(String title, String category, int price, String content, String location) {
         this.title = title;
         this.category = category;
@@ -103,59 +101,51 @@ public class Product {
         this.lng = lng;
     }
 
-    // 소프트 삭제
     public void deleteProduct() {
         this.deletedAt = LocalDateTime.now();
     }
 
-    // 삭제 여부 확인
     public boolean isDeleted() {
         return this.deletedAt != null;
     }
 
-    // 판매완료 처리
-    public void markAsSoldOut() {
+    public void markAsSoldOut(String buyerUsername) {
         this.saleStatus = "SOLD_OUT";
+        this.buyerUsername = buyerUsername;
     }
 
-    // 판매완료 여부
     public boolean isSoldOut() {
         return "SOLD_OUT".equals(this.saleStatus);
     }
 
-    // 예약중 처리
-    public void markAsReserved() {
+    public void markAsReserved(String buyerUsername) {
         this.saleStatus = "RESERVED";
+        this.buyerUsername = buyerUsername;
     }
 
-    // 예약중 해제 -> 다시 판매중
     public void markAsSale() {
         this.saleStatus = "SALE";
+        this.buyerUsername = null;
     }
 
-    // 예약중 여부
     public boolean isReserved() {
         return "RESERVED".equals(this.saleStatus);
     }
 
-    // 조회수 증가
     public void increaseViewCount() {
         this.viewCount++;
     }
 
-    // 양방향 연관관계 편의 메서드
     public void addProductImage(ProductImage productImage) {
         this.productImages.add(productImage);
         productImage.setProduct(this);
     }
 
-    // 기존 이미지 제거
     public void removeProductImage(ProductImage productImage) {
         this.productImages.remove(productImage);
         productImage.setProduct(null);
     }
 
-    // 신고 횟수 추가
     public void setReportCount(Integer reportCount) {
         this.reportCount = reportCount;
     }
@@ -167,6 +157,6 @@ public class Product {
 
     public void restoreToSale() {
         this.saleStatus = "SALE";
-        this.hideReason = null; // 숨김 해제 시 사유 초기화
+        this.hideReason = null;
     }
 }

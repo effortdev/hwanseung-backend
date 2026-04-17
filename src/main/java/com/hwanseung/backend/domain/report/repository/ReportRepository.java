@@ -7,7 +7,6 @@ import java.util.List;
 
 public interface ReportRepository extends JpaRepository<Report, Long> {
 
-    // 중복 신고 방지
     boolean existsByTypeAndReporterIdAndTargetProductId(
             String type,
             Long reporterId,

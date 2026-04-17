@@ -9,11 +9,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-/**
- * 메인 페이지용 공개 통계 API
- * - 인증 불필요 (SecurityConfig에서 permitAll 설정 필요)
- * - 누적 거래 금액(GMV)과 오늘 거래 수만 반환
- */
 @RestController
 @RequestMapping("/api/public/statistics")
 @RequiredArgsConstructor

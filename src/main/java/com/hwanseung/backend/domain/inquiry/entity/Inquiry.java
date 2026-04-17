@@ -15,7 +15,7 @@ public class Inquiry {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String category; // all, pay, user, product
+    private String category;
 
     @Column(columnDefinition = "TEXT")
     private String question;

@@ -33,8 +33,6 @@ public class PayRestController {
     @Value("${iamport.api.secret}")
     private String impSecretKey;
 
-    // 1. 포트원 토큰 가져오기
-    // 1. 포트원 토큰 가져오기 (디버깅 강화 버전)
     public String getToken() {
         try {
             Map<String, String> requestBody = new HashMap<>();
@@ -50,24 +48,20 @@ public class PayRestController {
                     .build();
 
             HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-            System.out.println("🚨 [1단계] 토큰 발급 응답: " + response.body()); // 🌟 이유를 눈으로 직접 확인!
 
             Map<String, Object> resMap = mapper.readValue(response.body(), Map.class);
             Map<String, Object> responseData = (Map<String, Object>) resMap.get("response");
 
             if (responseData == null) {
-                System.out.println("❌ 토큰 발급 실패! API Key와 Secret을 확인하세요.");
                 return null;
             }
 
             return (String) responseData.get("access_token");
         } catch (Exception e) {
-            System.out.println("❌ 토큰 발급 중 통신 에러: " + e.getMessage());
             return null;
         }
     }
 
-    // 2. 결제 위변조 검증 API (초정밀 디버깅 버전)
     @PostMapping("/verify")
     public ResponseEntity<String> verifyCharge(@RequestHeader("Authorization") String accessToken,
                                                @RequestBody PayChargeVO chargeVO) {
@@ -80,6 +74,7 @@ public class PayRestController {
             }
 
             Long userId = jwtTokenProvider.getUserIdFromToken(accessToken.substring(7));
+            String username = jwtTokenProvider.getUsernameFromToken(accessToken.substring(7));
             String iamportToken = getToken();
 
             if (iamportToken == null || iamportToken.isBlank()) {
@@ -112,12 +107,7 @@ public class PayRestController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("fail");
             }
 
-            PayHistory history = new PayHistory();
-            history.setUserId(String.valueOf(userId));
-            history.setImpUid(paidImpUid);
-            history.setMerchantUid(paidMerchantUid);
-            history.setType("CHARGE");
-            history.setAmount(actualPaidAmount);
+            PayHistory history = PayHistory.builder().userId(userId).username(username).impUid(paidImpUid).merchantUid(paidMerchantUid).type("CHARGE").amount(actualPaidAmount).build();
 
             boolean isSuccess = payService.chargeHwanseungPay(history);
 
@@ -167,15 +157,12 @@ public class PayRestController {
             return null;
         }
     }
-    // 3. 내 잔액 조회 API
     @GetMapping("/balance")
     public ResponseEntity<Integer> getMyBalance(@RequestHeader("Authorization") String accessToken) {
 
-        // 🌟 수정 3: 토큰에서 고유번호를 숫자(Long)로 받습니다!
         Long userId = this.jwtTokenProvider.getUserIdFromToken(accessToken.substring(7));
 
-        // 🌟 수정 4: 서비스에 넘겨줄 때도 String.valueOf()로 글자 변환해서 전달합니다!
-        int myBalance = payService.getBalance(String.valueOf(userId));
+        int myBalance = payService.getBalance(userId);
 
         return ResponseEntity.status(HttpStatus.OK).body(myBalance);
     }
@@ -183,20 +170,16 @@ public class PayRestController {
     public ResponseEntity<?> usePoint(@RequestHeader("Authorization") String accessToken,
                                       @RequestBody PayUseVO useVO) {
         try {
-            // 1. 토큰에서 유저 고유번호(id) 꺼내기
             Long userId = this.jwtTokenProvider.getUserIdFromToken(accessToken.substring(7));
 
-            // 2. 서비스 호출하여 결제(차감) 진행
             boolean isSuccess = payService.useHwanseungPay(String.valueOf(userId), useVO);
 
             if (isSuccess) {
-                // 성공 시 프론트엔드로 success 메시지 전달
                 return ResponseEntity.status(HttpStatus.OK).body("success");
             } else {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("fail");
             }
         } catch (IllegalArgumentException e) {
-            // 🌟 잔액이 부족할 경우, Service에서 던진 에러 메시지를 프론트엔드로 그대로 전달!
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();

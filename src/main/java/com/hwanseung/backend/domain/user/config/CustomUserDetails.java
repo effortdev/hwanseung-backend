@@ -10,19 +10,9 @@ import java.util.Collection;
 import java.util.Collections;
 
 
-/*
-Spring Security 에서 인증에 사용하기 위한 User 정보를 담은 객체.
-public interface UserDetails를 implements하여 CustomUserDetails로 커스텀.
-
-SpringBoot WebSecurity에서 JWT(JSON Web Token)의 데이터 흐름:
-CustomUserDetails -> CustomUserDetailsService ->
-JwtTokenProvider -> JwtTokenFilter -> WebSecurityConfig
-*/
-//User.java에 Authority가 추가된 CustomUser Class임
 public class CustomUserDetails implements UserDetails {
     private final User user;
 
-    // Constructor
     public CustomUserDetails(User user) {
         this.user = user;
     }
@@ -79,6 +69,6 @@ public class CustomUserDetails implements UserDetails {
     }
 
     public Status getStatus() {
-        return user.getStatus(); // 엔티티의 status 필드값을 리턴
+        return user.getStatus();
     }
 }

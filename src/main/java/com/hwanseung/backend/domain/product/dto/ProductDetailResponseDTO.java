@@ -21,6 +21,7 @@ public class ProductDetailResponseDTO {
     private String sellerId;
     private String sellerNickname;
     private String saleStatus;
+    private String buyerUsername;
     private int viewCount;
     private List<ProductImageResponseDTO> productImages;
 
@@ -36,6 +37,7 @@ public class ProductDetailResponseDTO {
                 .sellerId(product.getSellerId())
                 .sellerNickname(product.getSellerNickname())
                 .saleStatus(product.getSaleStatus())
+                .buyerUsername(product.getBuyerUsername())
                 .viewCount(product.getViewCount())
                 .productImages(
                         product.getProductImages().stream()

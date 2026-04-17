@@ -31,7 +31,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByCreatedAtAfter(LocalDateTime dateTime);
     long countByStatus(Status status);
 
-    // 검색어(이메일 또는 닉네임)를 포함한 페이징 조회
     Page<User> findByEmailContainingOrNicknameContaining(String email, String nickname, Pageable pageable);
 
     @Modifying
@@ -46,4 +45,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Page<User> findSuspendedUsers(@Param("keyword") String keyword, Pageable pageable);
 
     List<User> findByRoleIn(List<Role> roles);
+
+    List<User> findByUsernameIn(List<String> usernames);
 }

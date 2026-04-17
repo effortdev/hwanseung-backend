@@ -10,9 +10,9 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ChatMessage {
-    private String roomId;   // 채팅방 ID
-    private String sender;   // 보낸 사람
-    private String content;  // 메시지 내용
+    private String roomId;
+    private String sender;
+    private String content;
 
-    private String receiverId; // STOMP 알림 배달을 위한 임시 주소표
+    private String receiverId;
 }

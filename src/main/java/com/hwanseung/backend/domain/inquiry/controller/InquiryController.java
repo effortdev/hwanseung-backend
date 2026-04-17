@@ -16,7 +16,6 @@ public class InquiryController {
     private final InquiryService inquiryService;
 
 
-    // 목록 조회 (페이징 및 카테고리 필터)
     @GetMapping("/all")
     public ResponseEntity<List<Inquiry>> getInquiriesAll(
             @RequestParam(defaultValue = "all") String category) {
@@ -24,7 +23,6 @@ public class InquiryController {
         return ResponseEntity.ok(inquiryService.getInquiriesAll(category));
     }
 
-    // 목록 조회 (페이징 및 카테고리 필터)
     @GetMapping
     public ResponseEntity<Page<Inquiry>> getInquiries(
             @RequestParam(defaultValue = "all") String category,
@@ -33,19 +31,16 @@ public class InquiryController {
         return ResponseEntity.ok(inquiryService.getInquiries(category, page));
     }
 
-    // 등록
     @PostMapping
     public ResponseEntity<Inquiry> create(@RequestBody Inquiry inquiry) {
         return ResponseEntity.ok(inquiryService.save(inquiry));
     }
 
-    // 수정
     @PutMapping("/{id}")
     public ResponseEntity<Inquiry> update(@PathVariable Long id, @RequestBody Inquiry inquiry) {
         return ResponseEntity.ok(inquiryService.update(id, inquiry));
     }
 
-    // 삭제
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         inquiryService.delete(id);

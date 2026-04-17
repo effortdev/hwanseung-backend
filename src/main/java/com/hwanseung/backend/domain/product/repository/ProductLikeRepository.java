@@ -10,16 +10,12 @@ import java.util.Optional;
 
 public interface ProductLikeRepository extends JpaRepository<ProductLike, Integer> {
 
-    // 해당 유저가 해당 상품 찜했는지 조회
     Optional<ProductLike> findByProductAndUser(Product product, User user);
 
-    // 해당 유저가 해당 상품 찜했는지 여부만 확인
     boolean existsByProductAndUser(Product product, User user);
 
-    // 해당 상품 찜 개수
     long countByProduct(Product product);
 
-    // 찜 취소
     void deleteByProductAndUser(Product product, User user);
 
     List<ProductLike> findByUser_Username(String username);

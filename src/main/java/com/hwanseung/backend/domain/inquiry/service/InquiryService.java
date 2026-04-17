@@ -25,7 +25,6 @@ public class InquiryService {
 
     public List<Inquiry> getInquiriesAll(String category) {
         System.out.println("category: "+category);
-        // 최신순으로 정렬 (ID 내림차순)
         List<Inquiry> list = null;
         if(!category.equals("all")){
             list = inquiryRepository.findByCategory(category, Sort.by("createdAt").descending());
@@ -35,11 +34,7 @@ public class InquiryService {
         return list;
     }
 
-    /**
-     * 질문 목록 조회 (페이징 및 카테고리 필터)
-     */
     public Page<Inquiry> getInquiries(String category, int page) {
-        // 최신순으로 정렬 (ID 내림차순)
         Pageable pageable = PageRequest.of(page, 5, Sort.by(Sort.Direction.DESC, "id"));
 
         if (category == null || category.equals("all")) {
@@ -48,23 +43,16 @@ public class InquiryService {
         return inquiryRepository.findByCategory(category, pageable);
     }
 
-    /**
-     * 질문 등록
-     */
     @Transactional
     public Inquiry save(Inquiry inquiry) {
         return inquiryRepository.save(inquiry);
     }
 
-    /**
-     * 질문 수정
-     */
     @Transactional
     public Inquiry update(Long id, Inquiry requestDto) {
         Inquiry inquiry = inquiryRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 질문이 존재하지 않습니다. id=" + id));
 
-        // 변경 감지를 통한 수정
         inquiry.setCategory(requestDto.getCategory());
         inquiry.setQuestion(requestDto.getQuestion());
         inquiry.setAnswer(requestDto.getAnswer());
@@ -72,9 +60,6 @@ public class InquiryService {
         return inquiry;
     }
 
-    /**
-     * 질문 삭제
-     */
     @Transactional
     public void delete(Long id) {
         Inquiry inquiry = inquiryRepository.findById(id)

@@ -7,7 +7,6 @@ import java.util.List;
 
 public class ReportDTO {
 
-    /** 신고 목록 응답 */
     @Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
     public static class ListResponse {
         private Long id;
@@ -20,7 +19,6 @@ public class ReportDTO {
         private LocalDateTime createdAt;
     }
 
-    /** 신고 상세 응답 */
     @Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
     public static class DetailResponse {
         private Long id;
@@ -53,20 +51,17 @@ public class ReportDTO {
         private LocalDateTime createdAt;
     }
 
-    /** 경고/기각 요청 */
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor
     public static class MemoRequest {
         private String memo;
     }
 
-    /** 정지 요청 */
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor
     public static class SuspendRequest {
         private int days;
         private String memo;
     }
 
-    /** 요약 카운트 */
     @Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
     public static class SummaryCount {
         private long total;
@@ -76,7 +71,6 @@ public class ReportDTO {
         private long dismissed;
     }
 
-    /** 정지 사용자 응답 */
     @Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
     public static class SuspendedUserResponse {
         private Long id;

@@ -31,7 +31,6 @@ public class ChatBatchConfig {
     private final ChatMessageRepository chatMessageRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // 1. Job (배치 작업의 단위)
     @Bean
     public Job chatBackupJob() {
         return new JobBuilder("chatBackupJob", jobRepository)
@@ -39,11 +38,9 @@ public class ChatBatchConfig {
                 .build();
     }
 
-    // 2. Step (읽기 -> 가공 -> 쓰기)
     @Bean
     public Step chatBackupStep() {
         return new StepBuilder("chatBackupStep", jobRepository)
-                // 100개씩 묶어서 처리하겠다는 뜻입니다 (Chunk 크기)
                 .<String, ChatMessage>chunk(100, transactionManager)
                 .reader(redisItemReader())
                 .processor(chatProcessor())
@@ -51,7 +48,6 @@ public class ChatBatchConfig {
                 .build();
     }
 
-    // 3. Reader: Redis의 'chat_messages_buffer'에서 하나씩 쏙쏙 빼옵니다 (Left Pop)
     @Bean
     public ItemReader<String> redisItemReader() {
         return () -> {
@@ -60,7 +56,6 @@ public class ChatBatchConfig {
         };
     }
 
-    // 4. Processor: Redis에서 꺼낸 JSON 문자열을 ChatMessage 엔티티로 예쁘게 변환합니다.
     @Bean
     public ItemProcessor<String, ChatMessage> chatProcessor() {
         return item -> {
@@ -73,7 +68,6 @@ public class ChatBatchConfig {
         };
     }
 
-    // 5. Writer: 변환된 엔티티 100개를 모아서 MySQL에 한 방에(saveAll) 쾅! 저장합니다.
     @Bean
     public ItemWriter<ChatMessage> mysqlItemWriter() {
         return chunk -> {

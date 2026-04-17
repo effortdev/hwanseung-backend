@@ -1,9 +1,7 @@
 package com.hwanseung.backend.domain.product.controller;
 
-import com.hwanseung.backend.domain.product.dto.ProductCreateRequestDTO;
-import com.hwanseung.backend.domain.product.dto.ProductDetailResponseDTO;
-import com.hwanseung.backend.domain.product.dto.ProductListResponseDTO;
-import com.hwanseung.backend.domain.product.dto.ProductUpdateRequestDTO;
+import com.hwanseung.backend.domain.product.dto.*;
+import com.hwanseung.backend.domain.product.entity.Product;
 import com.hwanseung.backend.domain.product.service.ProductService;
 import com.hwanseung.backend.domain.user.config.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +18,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173") // 프론트 주소에 맞게 수정
+@CrossOrigin(origins = "http://localhost:5173")
 public class ProductController {
 
     private final ProductService productService;
@@ -39,8 +37,6 @@ public class ProductController {
         ));
     }
 
-    //내 찜목록
-    // ProductController.java 에 추가
     @GetMapping("/wishlist")
     public ResponseEntity<List<ProductListResponseDTO>> getWishlist(Authentication authentication) {
         CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
@@ -48,7 +44,6 @@ public class ProductController {
         return ResponseEntity.ok(wishlist);
     }
 
-    // 상품 목록 조회
     @GetMapping
     public ResponseEntity<List<ProductListResponseDTO>> getProductList(Authentication authentication) {
         String loginUserId = authentication != null ? authentication.getName() : null;
@@ -57,15 +52,12 @@ public class ProductController {
         return ResponseEntity.ok(productList);
     }
 
-    // 상품 상세 조회
     @GetMapping("/{productId}")
     public ResponseEntity<ProductDetailResponseDTO> getProductDetail(@PathVariable Integer productId) {
-        System.out.println("👉 상세 조회 요청 id = " + productId);
         ProductDetailResponseDTO productDetail = productService.getProductDetail(productId);
         return ResponseEntity.ok(productDetail);
     }
 
-    // 메인페이지 인기 매물 조회
     @GetMapping("/popular")
     public ResponseEntity<List<ProductListResponseDTO>> getPopularProducts(Authentication authentication) {
         String loginUserId = authentication != null ? authentication.getName() : null;
@@ -89,7 +81,6 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
-    // 상품 수정 multipart/form-data 로 받기
     @PutMapping(value = "/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateProduct(
             @PathVariable Integer productId,
@@ -104,7 +95,6 @@ public class ProductController {
         ));
     }
 
-    // 상품 삭제
     @DeleteMapping("/{productId}")
     public ResponseEntity<?> deleteProduct(
             @PathVariable Integer productId,
@@ -118,13 +108,22 @@ public class ProductController {
         ));
     }
 
-    // 판매완료 처리
-    @PatchMapping("/{productId}/sold-out")
-    public ResponseEntity<?> markProductAsSoldOut(
+    @GetMapping("/{productId}/chat-buyers")
+    public ResponseEntity<List<ProductChatBuyerResponseDTO>> getChatBuyers(
             @PathVariable Integer productId,
             Authentication authentication
     ) {
-        productService.markProductAsSoldOut(productId, authentication);
+        List<ProductChatBuyerResponseDTO> buyers = productService.getChatBuyers(productId, authentication);
+        return ResponseEntity.ok(buyers);
+    }
+
+    @PatchMapping("/{productId}/sold-out")
+    public ResponseEntity<?> markProductAsSoldOut(
+            @PathVariable Integer productId,
+            @RequestBody ProductBuyerRequestDTO requestDTO,
+            Authentication authentication
+    ) {
+        productService.markProductAsSoldOut(productId, requestDTO, authentication);
 
         return ResponseEntity.ok(Map.of(
                 "message", "판매완료 처리되었습니다.",
@@ -132,21 +131,21 @@ public class ProductController {
         ));
     }
 
-    // 예약중 처리
     @PatchMapping("/{productId}/reserved")
     public ResponseEntity<?> markProductAsReserved(
             @PathVariable Integer productId,
+            @RequestBody ProductBuyerRequestDTO requestDTO,
             Authentication authentication
     ) {
-        productService.markProductAsReserved(productId, authentication);
+        productService.markProductAsReserved(productId, requestDTO, authentication);
 
         return ResponseEntity.ok(Map.of(
                 "message", "예약중 처리되었습니다.",
-                "productId", productId
+                "productId", productId,
+                "buyerUsername", requestDTO.getBuyerUsername()
         ));
     }
 
-    // 예약해제 -> 판매중
     @PatchMapping("/{productId}/sale")
     public ResponseEntity<?> markProductAsSale(
             @PathVariable Integer productId,
@@ -160,7 +159,6 @@ public class ProductController {
         ));
     }
 
-    // 🌟 [추가] 내 판매 내역 API
     @GetMapping("/my-sales")
     public ResponseEntity<List<ProductListResponseDTO>> getMySalesList(Authentication authentication) {
 
@@ -171,6 +169,27 @@ public class ProductController {
         return ResponseEntity.ok(mySalesList);
     }
 
+    // 🌟 [추가] 내 구매 내역 API
+    @GetMapping("/my-payments")
+    public ResponseEntity<List<ProductListResponseDTO>> getMyPaymentsList(Authentication authentication) {
+        System.out.println("구매내역 확인");
+        String loginUserId = authentication.getName();
+        List<ProductListResponseDTO> mySalesList = productService.getMyPaymentsList(loginUserId);
+        return ResponseEntity.ok(mySalesList);
+    }
 
 
+    // 결제 완료 처리
+    @PatchMapping("/{productId}/payments")
+    public ResponseEntity<?> productAsPayment(
+            @PathVariable Integer productId,
+            Authentication authentication
+    ) {
+        String message = productService.productAsPayment(productId, authentication);
+
+        return ResponseEntity.ok(Map.of(
+                "message", message,
+                "productId", productId
+        ));
+    }
 }

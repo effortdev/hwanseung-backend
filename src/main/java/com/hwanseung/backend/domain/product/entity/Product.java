@@ -82,7 +82,7 @@ public class Product {
     private String buyerUsername;
 
     @Column(name="pay_status")
-    private boolean payStatus;
+    private Boolean payStatus;
 
     @Builder.Default
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)

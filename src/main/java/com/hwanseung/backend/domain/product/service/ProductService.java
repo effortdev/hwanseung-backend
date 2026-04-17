@@ -548,12 +548,16 @@ public class ProductService {
 
         CustomUserDetails loginUser = (CustomUserDetails) authentication.getPrincipal();
         String loginUserId = loginUser.getUsername();
+        System.out.println("ProductService 1111 username :::  " + loginUserId);
         Optional<PayBalance> optionalPayBalance = payBalanceRepository.findByUsername(loginUserId);
         PayBalance payBalance = optionalPayBalance.get();
+        System.out.println("ProductService 2222 payBalance ::: " + payBalance);
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("상품 없음"));
+        System.out.println("ProductService 333 product ::: " + product);
 
         if(product.getBuyerUsername().equals(loginUserId) && product.getPrice() <= payBalance.getHwanseungPay()){
+            System.out.println("ProductService 4444 포인트 조정 진입");
             // 구매자 포인트 조정
             PayHistory history = PayHistory.builder().userId(payBalance.getUserId()).amount(-product.getPrice()).type("PAYMENT").username(loginUserId).build();
             em.persist(history);
@@ -572,6 +576,7 @@ public class ProductService {
             productRepository.save(product);
             message = "결제가 완료되었습니다.";
         }
+        System.out.println("ProductService 4444 포인트 조정 미진입");
         return message;
     }
 }

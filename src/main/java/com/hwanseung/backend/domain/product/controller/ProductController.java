@@ -185,7 +185,9 @@ public class ProductController {
             @PathVariable Integer productId,
             Authentication authentication
     ) {
+        System.out.println("ProductController 진입 1111  :::  ");
         String message = productService.productAsPayment(productId, authentication);
+        System.out.println("ProductController message 2222  :::  " + message);
 
         return ResponseEntity.ok(Map.of(
                 "message", message,

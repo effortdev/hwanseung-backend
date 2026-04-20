@@ -84,7 +84,7 @@ public class User {
     private Integer trustScore = 0;
 
     @Column
-    private Integer reportCount;
+    private Integer reportCount = 0;
 
     @Column(name = "neighborhood", length = 50)
     private String neighborhood;
@@ -111,6 +111,12 @@ public class User {
 
     @Column(name = "provider_id", unique = true)
     private String providerId;
+
+    @PrePersist
+    public void prePersist() {
+        this.reportCount = this.reportCount == null ? 0 : this.reportCount;
+        this.trustScore = this.trustScore == null ? 0 : this.trustScore;
+    }
 
 
     public void withdraw() { //회원탈퇴
